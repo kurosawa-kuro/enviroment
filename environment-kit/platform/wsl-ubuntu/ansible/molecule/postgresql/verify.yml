@@ -11,12 +11,13 @@
         - pg_config --version
         - neonctl --version
 
-    - name: Check PostgreSQL repository file
-      stat:
-        path: /etc/apt/sources.list.d/pgdg.list
+    - name: Check PostgreSQL repository configuration
+      shell: |
+        grep -R "apt.postgresql.org/pub/repos/apt" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null
+      changed_when: false
       register: pg_repo
 
-    - name: Assert PostgreSQL repository exists
+    - name: Assert PostgreSQL repository is configured
       assert:
         that:
-          - pg_repo.stat.exists
+          - pg_repo.rc == 0
