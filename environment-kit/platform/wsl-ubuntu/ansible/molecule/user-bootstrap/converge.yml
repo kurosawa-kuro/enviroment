@@ -1,0 +1,16 @@
+---
+- name: Converge user-bootstrap scenario
+  hosts: molecule
+  become: true
+  vars_files:
+    - ../resources/common-vars.yml
+  pre_tasks:
+    - name: Install git for bootstrap verification
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+  tasks:
+    - name: Apply user-bootstrap role
+      import_role:
+        name: user-bootstrap

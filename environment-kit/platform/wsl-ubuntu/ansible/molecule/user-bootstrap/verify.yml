@@ -1,0 +1,30 @@
+---
+- name: Verify user-bootstrap scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Read git user.name
+      command: git config --global user.name
+      changed_when: false
+      register: git_user_name
+
+    - name: Read git user.email
+      command: git config --global user.email
+      changed_when: false
+      register: git_user_email
+
+    - name: Check bootstrap files
+      stat:
+        path: "{{ item }}"
+      register: bootstrap_files
+      loop:
+        - /root/.gitignore_global
+        - /root/.bashrc
+        - /root/.ssh
+
+    - name: Assert bootstrap configuration
+      assert:
+        that:
+          - git_user_name.stdout == "Molecule Tester"
+          - git_user_email.stdout == "molecule@example.com"
+          - (bootstrap_files.results | map(attribute='stat.exists') | list) | min

@@ -122,6 +122,21 @@ temp/
 *.tmp
 *.temppgdata/
 
+# Python / virtualenv
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.pyc
+
+# Ansible / Molecule local runtime artifacts
+*.retry
+.molecule/
+platform/wsl-ubuntu/.venv-molecule/
+platform/wsl-ubuntu/ansible/.ansible/
+platform/wsl-ubuntu/ansible/*.retry
+platform/wsl-ubuntu/ansible/molecule/*/.molecule/
+
 # Local env / secrets
 env/secret/*
 !env/secret/.gitkeep

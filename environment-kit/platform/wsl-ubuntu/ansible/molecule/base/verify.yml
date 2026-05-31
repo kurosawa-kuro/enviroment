@@ -1,0 +1,25 @@
+---
+- name: Verify base scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check base commands
+      command: "{{ item }}"
+      changed_when: false
+      loop:
+        - python3 --version
+        - pip3 --version
+        - pipx --version
+        - uv --version
+        - git --version
+        - doppler --version
+
+    - name: Check WSL config file
+      stat:
+        path: /etc/wsl.conf
+      register: wsl_conf
+
+    - name: Assert WSL config exists
+      assert:
+        that:
+          - wsl_conf.stat.exists

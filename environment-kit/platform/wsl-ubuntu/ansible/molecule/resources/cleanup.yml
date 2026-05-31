@@ -1,0 +1,5 @@
+---
+- name: Molecule cleanup noop
+  hosts: localhost
+  gather_facts: false
+  tasks: []

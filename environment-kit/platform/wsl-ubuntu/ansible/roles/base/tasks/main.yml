@@ -52,19 +52,25 @@
   command: timedatectl show --property=Timezone --value
   register: current_timezone
   changed_when: false
+  when: base_manage_timezone | default(true)
 
 - name: Set system timezone
   command: timedatectl set-timezone {{ timezone }}
-  when: current_timezone.stdout != timezone
+  when:
+    - base_manage_timezone | default(true)
+    - current_timezone.stdout != timezone
 
 - name: Check current locale
   command: locale
   register: current_locale
   changed_when: false
+  when: base_manage_locale | default(true)
 
 - name: Set default locale
   command: update-locale LANG={{ locale_lang }}
-  when: ("LANG=" + locale_lang) not in current_locale.stdout
+  when:
+    - base_manage_locale | default(true)
+    - ("LANG=" + locale_lang) not in current_locale.stdout
 
 - name: Configure /etc/wsl.conf
   template:

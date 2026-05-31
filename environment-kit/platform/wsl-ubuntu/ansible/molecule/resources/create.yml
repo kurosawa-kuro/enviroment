@@ -1,0 +1,105 @@
+---
+- name: Create Molecule containers
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars:
+    molecule_inventory:
+      all:
+        children:
+          molecule:
+            hosts: {}
+
+  tasks:
+    - name: Remove stale scenario containers
+      ansible.builtin.command:
+        argv:
+          - docker
+          - rm
+          - -f
+          - "{{ item.name }}"
+      register: remove_result
+      failed_when: remove_result.rc not in [0, 1]
+      changed_when: remove_result.rc == 0
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create scenario containers
+      ansible.builtin.shell: |
+        set -eu
+        docker run -d \
+          --name {{ item.name | quote }} \
+          {% if item.privileged | default(false) %}--privileged {% endif %}
+          {% if item.cgroupns_mode is defined %}--cgroupns {{ item.cgroupns_mode | quote }} {% endif %}
+          {% for capability in item.capabilities | default([]) %}--cap-add {{ capability | quote }} {% endfor %}
+          {% for volume in item.volumes | default([]) %}-v {{ volume | quote }} {% endfor %}
+          {% for mount in item.tmpfs | default([]) %}--tmpfs {{ mount | quote }} {% endfor %}
+          {{ item.image | quote }} \
+          {{ item.command | default('sleep 1d') }}
+      args:
+        executable: /bin/bash
+      register: container_result
+      changed_when: true
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Fail when container is not running
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - -f
+          - "{{ '{{.State.Running}}' }}"
+          - "{{ item.name }}"
+      register: inspect_result
+      changed_when: false
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert container is running
+      ansible.builtin.assert:
+        that:
+          - item.stdout == "true"
+        fail_msg: "Container {{ item.item.name }} failed to start"
+      loop: "{{ inspect_result.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Build Molecule inventory
+      set_fact:
+        molecule_inventory: >-
+          {{
+            molecule_inventory
+            | combine(
+              {
+                'all': {
+                  'children': {
+                    'molecule': {
+                      'hosts': {
+                        item.name: {
+                          'ansible_connection': 'community.docker.docker',
+                          'ansible_user': 'root'
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              recursive=True
+            )
+          }}
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Write Molecule inventory
+      copy:
+        content: "{{ molecule_inventory | to_nice_yaml }}"
+        dest: "{{ molecule_ephemeral_directory }}/inventory/molecule_inventory.yml"
+        mode: "0600"
+
+    - name: Refresh inventory
+      meta: refresh_inventory

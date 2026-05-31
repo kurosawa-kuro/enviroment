@@ -29,13 +29,27 @@
   set_fact:
     security_tool_owner: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
 
+- name: Resolve security tool home
+  command: "getent passwd {{ security_tool_owner }}"
+  register: security_tool_owner_passwd
+  changed_when: false
+
+- name: Resolve security tool home
+  set_fact:
+    security_tool_home: >-
+      {{
+        (security_tool_owner_passwd.stdout.split(':')[5])
+        if (security_tool_owner_passwd.stdout | length > 0)
+        else '/home/' + security_tool_owner
+      }}
+
 - name: Install kube-hunter via pipx
   command: pipx install kube-hunter=={{ kube_hunter_version }}
   args:
-    creates: "/home/{{ security_tool_owner }}/.local/bin/kube-hunter"
+    creates: "{{ security_tool_home }}/.local/bin/kube-hunter"
   become_user: "{{ security_tool_owner }}"
   environment:
-    HOME: "/home/{{ security_tool_owner }}"
+    HOME: "{{ security_tool_home }}"
 
 - name: Install kubescape binary
   get_url:

@@ -21,8 +21,18 @@
       }}
 
 - name: Resolve bootstrap target home
+  command: "getent passwd {{ bootstrap_target_user }}"
+  register: bootstrap_passwd_entry
+  changed_when: false
+
+- name: Resolve bootstrap target home
   set_fact:
-    bootstrap_target_home: "/home/{{ bootstrap_target_user }}"
+    bootstrap_target_home: >-
+      {{
+        (bootstrap_passwd_entry.stdout.split(':')[5])
+        if (bootstrap_passwd_entry.stdout | length > 0)
+        else '/home/' + bootstrap_target_user
+      }}
 
 - name: Ensure ~/.ssh directory permissions
   file:

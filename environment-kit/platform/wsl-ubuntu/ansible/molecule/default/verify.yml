@@ -1,0 +1,14 @@
+---
+- name: Verify default smoke scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check Python is available
+      ansible.builtin.command: python3 --version
+      changed_when: false
+
+    - name: Check /tmp is writable
+      ansible.builtin.file:
+        path: /tmp/molecule-default-smoke
+        state: touch
+        mode: "0644"

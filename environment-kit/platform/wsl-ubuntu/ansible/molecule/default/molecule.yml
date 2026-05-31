@@ -1,0 +1,28 @@
+---
+dependency:
+  name: shell
+  command: /bin/true
+
+driver:
+  name: default
+
+platforms:
+  - name: molecule-default
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_CONFIG: ${MOLECULE_PROJECT_DIRECTORY}/ansible.cfg
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
+  playbooks:
+    cleanup: ../resources/cleanup.yml
+    create: ../resources/create.yml
+    converge: converge.yml
+    destroy: ../resources/destroy.yml
+    prepare: ../resources/prepare.yml
+    side_effect: ../resources/side_effect.yml
+    verify: verify.yml
+
+verifier:
+  name: ansible

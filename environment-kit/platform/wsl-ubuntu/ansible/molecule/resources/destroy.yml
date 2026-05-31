@@ -1,0 +1,24 @@
+---
+- name: Destroy Molecule containers
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Stop and remove scenario containers
+      ansible.builtin.command:
+        argv:
+          - docker
+          - rm
+          - -f
+          - "{{ item.name }}"
+      register: destroy_result
+      failed_when: destroy_result.rc not in [0, 1]
+      changed_when: destroy_result.rc == 0
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Remove dynamic inventory
+      file:
+        path: "{{ molecule_ephemeral_directory }}/inventory/molecule_inventory.yml"
+        state: absent

@@ -1,0 +1,13 @@
+---
+- name: Verify cloud scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check cloud CLI commands
+      command: "{{ item }}"
+      changed_when: false
+      loop:
+        - aws --version
+        - terraform version
+        - gh --version
+        - /opt/google-cloud-sdk/bin/gcloud version

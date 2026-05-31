@@ -18,6 +18,8 @@
   - Rust 専用導線
 - `site-check.yml`
   - 導入済みツールの状態検証
+- `molecule/`
+  - Docker 一時環境での Molecule シナリオ群
 
 ## role
 
@@ -50,6 +52,8 @@
   - 選択式セットアップ用の有効 / 無効スイッチ
 - `env/config/setting.yaml`
   - Git の `user.name` / `user.email` / 既定 branch の共有設定
+- `requirements-molecule.txt` / `requirements-molecule.yml`
+  - Molecule 実行に必要な Python 依存と Ansible collection
 
 ## ポート方針
 
@@ -65,3 +69,4 @@
 - `gcloud` は `latest` を使います
 - Java / Kotlin は既定では入れません
 - ユーザー固有設定は `user-bootstrap` を有効化した場合のみ反映します
+- Molecule では systemd / timezone / locale のホスト依存処理を抑制し、role の回帰検知を優先します

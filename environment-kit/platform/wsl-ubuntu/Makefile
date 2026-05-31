@@ -6,12 +6,12 @@
 # 使用方法:
 #   make setup-ansible    # Ansible環境の初期セットアップ
 #   make setup           # config.ymlベースの環境セットアップ
-#   make test            # ドライラン実行
+#   make test            # syntax + lint + check
 #   make check           # システム状態確認
 #   make help            # ヘルプ表示
 # =============================================================================
 
-.PHONY: setup-ansible setup setup-base setup-user setup-rust version syntax lint test test-base test-rust check check-system cleanup-temp generate-requirements help
+.PHONY: setup-ansible setup setup-base setup-user setup-rust version syntax lint test test-base test-rust check check-system molecule-install molecule-list molecule-test molecule-test-base molecule-test-user molecule-test-all cleanup-temp generate-requirements help
 
 # =============================================================================
 # 設定変数
@@ -21,6 +21,8 @@
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 ANSIBLE_DIR := $(ROOT_DIR)/ansible
 SCRIPT_DIR := $(ROOT_DIR)/script
+MOLECULE_VENV := $(ROOT_DIR)/.venv-molecule
+MOLECULE_BIN := $(MOLECULE_VENV)/bin/molecule
 
 # Ansible設定
 PLAYBOOK := $(ANSIBLE_DIR)/site.yml
@@ -134,6 +136,35 @@ check-system:
 	@chmod +x "$(SCRIPT_DIR)/check-system.sh"
 	@$(SCRIPT_DIR)/check-system.sh
 
+# Molecule用仮想環境の準備
+molecule-install:
+	@echo "🧪 Molecule 環境をセットアップします..."
+	@python3 -m venv $(MOLECULE_VENV)
+	@$(MOLECULE_VENV)/bin/python -m pip install --upgrade pip
+	@$(MOLECULE_VENV)/bin/python -m pip install -r $(ANSIBLE_DIR)/requirements-molecule.txt
+	@PATH="$(MOLECULE_VENV)/bin:$$PATH" ansible-galaxy collection install -r $(ANSIBLE_DIR)/requirements-molecule.yml
+	@echo "✅ Molecule 環境のセットアップが完了しました"
+
+# Molecule シナリオ一覧
+molecule-list: molecule-install
+	@cd $(ANSIBLE_DIR) && PATH="$(MOLECULE_VENV)/bin:$$PATH" $(MOLECULE_BIN) list
+
+# Molecule smoke 実行（既定は default）
+molecule-test: molecule-install
+	@cd $(ANSIBLE_DIR) && PATH="$(MOLECULE_VENV)/bin:$$PATH" $(MOLECULE_BIN) test -s $${SCENARIO:-default}
+
+# Molecule base シナリオ実行
+molecule-test-base: molecule-install
+	@cd $(ANSIBLE_DIR) && PATH="$(MOLECULE_VENV)/bin:$$PATH" $(MOLECULE_BIN) test -s base
+
+# Molecule user-bootstrap シナリオ実行
+molecule-test-user: molecule-install
+	@cd $(ANSIBLE_DIR) && PATH="$(MOLECULE_VENV)/bin:$$PATH" $(MOLECULE_BIN) test -s user-bootstrap
+
+# Molecule 全シナリオ実行
+molecule-test-all: molecule-install
+	@cd $(ANSIBLE_DIR) && PATH="$(MOLECULE_VENV)/bin:$$PATH" $(MOLECULE_BIN) test --all
+
 # =============================================================================
 # メンテナンス
 # =============================================================================
@@ -186,6 +217,12 @@ help:
 	@echo "  make test-rust           - Rust単体プレイブックの構文チェック"
 	@echo "  make check               - Ansible の状態検証 playbook 実行"
 	@echo "  make check-system        - 既存のシステム確認スクリプト実行"
+	@echo "  make molecule-list       - Molecule シナリオ一覧"
+	@echo "  make molecule-test       - Molecule default smoke 実行"
+	@echo "  make molecule-test-base  - Molecule base シナリオ実行"
+	@echo "  make molecule-test-user  - Molecule user-bootstrap シナリオ実行"
+	@echo "  make molecule-test SCENARIO=runtime - 任意の Molecule シナリオ実行"
+	@echo "  make molecule-test-all   - Molecule 全シナリオ実行"
 	@echo ""
 	@echo "🔧 メンテナンス:"
 	@echo "  make cleanup-temp        - Ansible一時ディレクトリのクリーンアップ"

@@ -47,10 +47,11 @@ clone_repo() {
     chmod 644 "$HOME/.ssh/known_hosts"
 
     # 必要なら一時鍵ファイルを作る（Dopplerから注入）
-    if [[ -n "${DEPLOY_KEY_PRIVATE:-}" ]]; then
+    SSH_PRIVATE_KEY="${INTERNAL_GIT_SSH_PRIVATE_KEY:-${DEPLOY_KEY_PRIVATE:-}}"
+    if [[ -n "${SSH_PRIVATE_KEY:-}" ]]; then
       KEY_PATH="$HOME/.ssh/id_deploy"
       umask 077
-      printf "%s" "${DEPLOY_KEY_PRIVATE}" > "$KEY_PATH"
+      printf "%s" "${SSH_PRIVATE_KEY}" > "$KEY_PATH"
       chmod 600 "$KEY_PATH"
       GIT_SSH_COMMAND="ssh -i $KEY_PATH -o StrictHostKeyChecking=yes"
       export GIT_SSH_COMMAND

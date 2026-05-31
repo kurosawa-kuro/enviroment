@@ -5,8 +5,16 @@
   args:
     executable: /bin/bash
 
-- name: Install Node.js {{ nodejs_version }}
-  apt:
-    name: "nodejs={{ nodejs_version }}*"
-    state: present
-    update_cache: yes
+- name: Install Node.js from NodeSource
+  block:
+    - name: Install Node.js {{ nodejs_version }}
+      apt:
+        name: "nodejs={{ nodejs_version }}*"
+        state: present
+        update_cache: yes
+  rescue:
+    - name: Install Node.js {{ nodejs_version.split('.')[0] }}.x fallback
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes

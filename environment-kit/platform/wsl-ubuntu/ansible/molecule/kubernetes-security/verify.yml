@@ -1,0 +1,17 @@
+---
+- name: Verify kubernetes-security scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check kubernetes and security commands
+      command: "{{ item.cmd }}"
+      changed_when: false
+      loop:
+        - { cmd: "kubectl version --client" }
+        - { cmd: "kind version" }
+        - { cmd: "helm version" }
+        - { cmd: "kustomize version" }
+        - { cmd: "trivy --version" }
+        - { cmd: "kube-bench version" }
+        - { cmd: "/root/.local/bin/kube-hunter --version" }
+        - { cmd: "kubescape version" }

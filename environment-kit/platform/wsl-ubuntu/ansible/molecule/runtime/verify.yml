@@ -1,0 +1,27 @@
+---
+- name: Verify runtime scenario
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check runtime commands
+      command: "{{ item.cmd }}"
+      changed_when: false
+      loop:
+        - { cmd: "/opt/rust/bin/rustc --version" }
+        - { cmd: "/opt/rust/bin/cargo --version" }
+        - { cmd: "node --version" }
+        - { cmd: "npm --version" }
+        - { cmd: "/usr/local/go/bin/go version" }
+
+    - name: Check runtime profile files
+      stat:
+        path: "{{ item }}"
+      register: runtime_profiles
+      loop:
+        - /etc/profile.d/rust.sh
+        - /etc/profile.d/go.sh
+
+    - name: Assert runtime profile files exist
+      assert:
+        that:
+          - (runtime_profiles.results | map(attribute='stat.exists') | list) | min

@@ -1,0 +1,5 @@
+---
+- name: Molecule side-effect noop
+  hosts: localhost
+  gather_facts: false
+  tasks: []

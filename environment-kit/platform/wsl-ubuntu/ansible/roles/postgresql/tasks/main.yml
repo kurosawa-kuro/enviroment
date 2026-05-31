@@ -30,6 +30,7 @@
     name: postgresql
     state: started
     enabled: yes
+  when: postgresql_manage_service | default(true)
 
 - name: Set PostgreSQL port
   lineinfile:
@@ -37,6 +38,7 @@
     regexp: '^#?port = '
     line: "port = {{ postgres_port }}"
   notify: restart postgresql
+  when: postgresql_manage_service | default(true)
 
 - name: Configure PostgreSQL authentication
   lineinfile:
@@ -44,24 +46,28 @@
     regexp: '^local\s+all\s+postgres\s+'
     line: "local   all             postgres                                md5"
   notify: restart postgresql
+  when: postgresql_manage_service | default(true)
 
 - name: Set postgres user password
   shell: |
     sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{{ postgres_password }}';"
   args:
     executable: /bin/bash
+  when: postgresql_manage_service | default(true)
 
 - name: Ensure dev DB exists
   shell: |
     sudo -u postgres createdb {{ postgres_db_local }} || true
   args:
     executable: /bin/bash
+  when: postgresql_manage_service | default(true)
 
 - name: Ensure test DB exists  
   shell: |
     sudo -u postgres createdb {{ postgres_db_test }} || true
   args:
     executable: /bin/bash
+  when: postgresql_manage_service | default(true)
 
 - name: Enable extensions
   shell: |
@@ -76,6 +82,7 @@
   args:
     executable: /bin/bash
   loop: "{{ postgres_extensions.split(',') }}"
+  when: postgresql_manage_service | default(true)
 
 # Neon CLI (neonctl) — サーバーレス PostgreSQL。npm global で導入
 # Node.js は development-runtime ロール (site.yml 上 postgresql より前) で導入済み

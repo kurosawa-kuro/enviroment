@@ -45,13 +45,15 @@
 | `REPO_HTTPS_URL`     | HTTPS利用時 | PlaybookリポのHTTPS URL             | `https://github.com/org/repo.git` |
 | `REPO_DEST`          | 任意       | クローン先パス                          | `/opt/playbook`                   |
 | `GITHUB_TOKEN`       | 任意       | GitHub API呼出（Deploy Key登録等）      | `ghp_xxx`                         |
-| `DEPLOY_KEY_PRIVATE` | 任意       | SSHクローンする場合の秘密鍵                  | OpenSSH形式                         |
+| `INTERNAL_GIT_SSH_PRIVATE_KEY` | 任意 | GitHub SSHクローンに使う秘密鍵 | OpenSSH形式 |
+| `DEPLOY_KEY_PRIVATE` | 任意       | SSHクローンする場合の旧互換秘密鍵            | OpenSSH形式                         |
 | `DEPLOY_KEY_PUBLIC`  | 任意       | 同上（公開鍵）                          | `ssh-ed25519 ...`                 |
 | `ANSIBLE_PLAYBOOK`   | 任意       | 実行するPlaybookパス                   | `site.yml`                        |
 | `ANSIBLE_INVENTORY`  | 任意       | インベントリ指定                         | `"localhost,"`（ローカル）              |
 | `PKG_MANAGER`        | 任意       | 強制指定（`apt`/`dnf`/`yum`）          | `apt`                             |
 
-> `GITHUB_TOKEN`/`DEPLOY_KEY_*` は **Doppler上のシークレット**として保持し、`doppler run` で注入する。
+> `GITHUB_TOKEN` / `INTERNAL_GIT_SSH_PRIVATE_KEY` / `DEPLOY_KEY_*` は **Doppler上のシークレット**として保持し、`doppler run` で注入する。
+> `INTERNAL_GIT_SSH_PRIVATE_KEY` に対応する **公開鍵が GitHub に登録済みであること** は前提で、公開鍵登録自体はこのスクリプトの責務外とする。
 
 ### 3.2 出力
 
@@ -221,10 +223,11 @@ clone_repo() {
     chmod 644 "$HOME/.ssh/known_hosts"
 
     # 必要なら一時鍵ファイルを作る（Dopplerから注入）
-    if [[ -n "${DEPLOY_KEY_PRIVATE:-}" ]]; then
+    SSH_PRIVATE_KEY="${INTERNAL_GIT_SSH_PRIVATE_KEY:-${DEPLOY_KEY_PRIVATE:-}}"
+    if [[ -n "${SSH_PRIVATE_KEY:-}" ]]; then
       KEY_PATH="$HOME/.ssh/id_deploy"
       umask 077
-      printf "%s" "${DEPLOY_KEY_PRIVATE}" > "$KEY_PATH"
+      printf "%s" "${SSH_PRIVATE_KEY}" > "$KEY_PATH"
       chmod 600 "$KEY_PATH"
       GIT_SSH_COMMAND="ssh -i $KEY_PATH -o StrictHostKeyChecking=yes"
       export GIT_SSH_COMMAND
@@ -279,7 +282,7 @@ log "Done."
 * **単体**：
 
   * `REPO_SSH_URL` のみ／`REPO_HTTPS_URL` のみ
-  * `DEPLOY_KEY_PRIVATE` 有無
+  * `INTERNAL_GIT_SSH_PRIVATE_KEY` または `DEPLOY_KEY_PRIVATE` 有無
   * `DOPPLER_CONFIG` 切替
 * **結合**：
 
