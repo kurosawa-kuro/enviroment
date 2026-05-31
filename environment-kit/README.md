@@ -32,7 +32,7 @@ make setup-rust
 詳細は以下を参照してください。
 
 - [platform/wsl-ubuntu/README.md](./platform/wsl-ubuntu/README.md)
-- [docs/wsl-ubuntu-ansible/初期WSL設定.md](./docs/wsl-ubuntu-ansible/初期WSL設定.md)
+- [docs/wsl-ubuntu-ansible/04_運用.md](./docs/wsl-ubuntu-ansible/04_%E9%81%8B%E7%94%A8.md)
 
 ## PostgreSQL ポート方針
 
