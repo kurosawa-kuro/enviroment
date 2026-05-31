@@ -6,6 +6,10 @@
     - name: Check runtime commands
       command: "{{ item.cmd }}"
       changed_when: false
+      environment:
+        RUSTUP_HOME: /opt/rust
+        CARGO_HOME: /opt/rust
+        PATH: "/opt/rust/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       loop:
         - { cmd: "/opt/rust/bin/rustc --version" }
         - { cmd: "/opt/rust/bin/cargo --version" }

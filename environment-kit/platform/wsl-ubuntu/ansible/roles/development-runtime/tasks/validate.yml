@@ -6,6 +6,10 @@
       command: "{{ item.cmd }}"
       register: version_check
       failed_when: version_check.rc != 0
+      environment:
+        RUSTUP_HOME: /opt/rust
+        CARGO_HOME: /opt/rust
+        PATH: "/opt/rust/bin:/usr/local/go/bin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
       when: item.enabled | bool
       loop_control:
         label: "{{ item.name }}"
@@ -23,6 +27,8 @@
         node -e "console.log('Node.js test passed')"
       register: node_test
       failed_when: node_test.rc != 0
+      environment:
+        PATH: "/opt/rust/bin:/usr/local/go/bin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
       when: install_nodejs_enabled | default(true)
 
     - name: "Test Go functionality"
@@ -32,6 +38,8 @@
         rm -f /tmp/test.go
       register: go_test
       failed_when: go_test.rc != 0
+      environment:
+        PATH: "/opt/rust/bin:/usr/local/go/bin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
       when: install_go_enabled | default(true)
 
     - name: "Check Java toolchain versions"
