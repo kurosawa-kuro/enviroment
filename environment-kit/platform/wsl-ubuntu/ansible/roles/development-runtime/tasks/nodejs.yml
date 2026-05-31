@@ -1,9 +1,22 @@
----
-- name: Install NodeSource repository for Node.js {{ nodejs_version }}
+- name: Download NodeSource signing key
+  get_url:
+    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    dest: /tmp/nodesource-repo.gpg.key
+    mode: "0644"
+
+- name: Install NodeSource signing key
   shell: |
-    curl -fsSL https://deb.nodesource.com/setup_{{ nodejs_version.split('.')[0] }}.x | bash -
+    gpg --dearmor --yes --output /usr/share/keyrings/nodesource.gpg /tmp/nodesource-repo.gpg.key
   args:
+    creates: /usr/share/keyrings/nodesource.gpg
     executable: /bin/bash
+
+- name: Install NodeSource repository for Node.js {{ nodejs_version }}
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ nodejs_version.split('.')[0] }}.x nodistro main"
+    filename: nodesource
+    state: present
+    update_cache: yes
 
 - name: Install Node.js from NodeSource
   block:
