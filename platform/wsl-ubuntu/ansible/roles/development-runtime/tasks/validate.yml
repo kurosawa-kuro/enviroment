@@ -1,0 +1,71 @@
+---
+# Development runtime validation
+- name: "Validate development-runtime role installation"
+  block:
+    - name: "Check development runtime versions"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "rustc", cmd: "/opt/rust/bin/rustc --version" }
+        - { name: "cargo", cmd: "/opt/rust/bin/cargo --version" }
+        - { name: "node", cmd: "node --version" }
+        - { name: "npm", cmd: "npm --version" }
+        - { name: "go", cmd: "go version" }
+
+    - name: "Test Node.js functionality"
+      shell: |
+        node -e "console.log('Node.js test passed')"
+      register: node_test
+      failed_when: node_test.rc != 0
+
+    - name: "Test Go functionality"
+      shell: |
+        echo 'package main; import "fmt"; func main() { fmt.Println("Go test passed") }' > /tmp/test.go
+        go run /tmp/test.go
+        rm -f /tmp/test.go
+      register: go_test
+      failed_when: go_test.rc != 0
+
+    - name: "Check Java toolchain versions"
+      command: "{{ item.cmd }}"
+      register: java_version_check
+      failed_when: java_version_check.rc != 0
+      loop:
+        - { name: "java", cmd: "java --version" }
+        - { name: "javac", cmd: "javac --version" }
+        - { name: "maven", cmd: "mvn --version" }
+        - { name: "gradle", cmd: "gradle --version" }
+      when: install_java_enabled | default(false)
+
+    - name: "Test Java functionality"
+      shell: |
+        echo 'public class Test { public static void main(String[] args) { System.out.println("Java test passed"); } }' > /tmp/Test.java
+        javac /tmp/Test.java
+        java -cp /tmp Test
+        rm -f /tmp/Test.java /tmp/Test.class
+      register: java_test
+      failed_when: java_test.rc != 0
+      when: install_java_enabled | default(false)
+
+    - name: "Check Kotlin toolchain versions"
+      command: "{{ item.cmd }}"
+      register: kotlin_version_check
+      failed_when: kotlin_version_check.rc != 0
+      loop:
+        - { name: "kotlin", cmd: "kotlin -version" }
+        - { name: "kotlinc", cmd: "kotlinc -version" }
+      when: install_kotlin_enabled | default(false)
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for development-runtime role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['development-runtime'] }}"
+
+- name: "Development runtime validation completed successfully"
+  debug:
+    msg: "All development runtime components validated successfully"

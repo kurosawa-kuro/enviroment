@@ -1,0 +1,16 @@
+---
+- name: Install Go {{ go_version }}
+  unarchive:
+    src: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+  args:
+    creates: /usr/local/go/bin/go
+
+- name: Create Go PATH profile script
+  copy:
+    content: |
+      # Go PATH configuration
+      export PATH=/usr/local/go/bin:$PATH
+    dest: /etc/profile.d/go.sh
+    mode: '0644'

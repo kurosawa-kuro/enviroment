@@ -1,0 +1,18 @@
+METABASE_CONTAINER=metabase
+METABASE_PORT=3000
+METABASE_VOLUME=./metabase-data
+
+start:
+	@docker run -d \
+		--name $(METABASE_CONTAINER) \
+		-e MB_DB_FILE=/metabase.db \
+		-v $(METABASE_VOLUME):/metabase.db \
+		-p $(METABASE_PORT):3000 \
+		metabase/metabase:latest
+
+stop:
+	@docker stop $(METABASE_CONTAINER) || true
+	@docker rm $(METABASE_CONTAINER) || true
+
+logs:
+	@docker logs -f $(METABASE_CONTAINER)

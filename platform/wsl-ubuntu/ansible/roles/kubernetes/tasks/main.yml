@@ -1,0 +1,263 @@
+---
+# Install kubectl
+- name: Download kubectl {{ kubectl_version }}
+  get_url:
+    url: "https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    dest: /usr/local/bin/kubectl
+    mode: '0755'
+
+# Install kind
+- name: Download kind {{ kind_version }}
+  get_url:
+    url: "https://kind.sigs.k8s.io/dl/v{{ kind_version }}/kind-linux-amd64"
+    dest: /usr/local/bin/kind
+    mode: '0755'
+
+# Install kustomize
+- name: Download kustomize {{ kustomize_version }}
+  get_url:
+    url: "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv{{ kustomize_version }}/kustomize_v{{ kustomize_version }}_linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/kustomize.tar.gz"
+
+- name: Extract kustomize
+  unarchive:
+    src: "{{ download_dir }}/kustomize.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/kustomize
+
+# Install helm
+- name: Download helm {{ helm_version }}
+  get_url:
+    url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
+    dest: "{{ download_dir }}/helm.tar.gz"
+
+- name: Extract helm
+  unarchive:
+    src: "{{ download_dir }}/helm.tar.gz"
+    dest: "{{ download_dir }}"
+    remote_src: yes
+    creates: /usr/local/bin/helm
+
+- name: Check if helm is already installed
+  stat:
+    path: /usr/local/bin/helm
+  register: helm_installed
+
+- name: Install helm binary
+  copy:
+    src: "{{ download_dir }}/linux-amd64/helm"
+    dest: /usr/local/bin/helm
+    mode: '0755'
+    remote_src: yes
+  when: not helm_installed.stat.exists
+
+# Install minikube
+- name: Download minikube {{ minikube_version }}
+  get_url:
+    url: "https://storage.googleapis.com/minikube/releases/v{{ minikube_version }}/minikube-linux-amd64"
+    dest: /usr/local/bin/minikube
+    mode: '0755'
+
+# Install containerd
+- name: Download containerd {{ containerd_version }}
+  get_url:
+    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-amd64.tar.gz"
+    dest: "{{ download_dir }}/containerd.tar.gz"
+
+- name: Extract containerd
+  unarchive:
+    src: "{{ download_dir }}/containerd.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+    creates: /usr/local/bin/containerd
+  when: not ansible_check_mode
+
+# Install crictl
+- name: Download crictl {{ crictl_version }}
+  get_url:
+    url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ crictl_version }}/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
+    dest: "{{ download_dir }}/crictl.tar.gz"
+
+- name: Extract crictl
+  unarchive:
+    src: "{{ download_dir }}/crictl.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/crictl
+  when: not ansible_check_mode
+
+# Install nerdctl
+- name: Download nerdctl {{ nerdctl_version }}
+  get_url:
+    url: "https://github.com/containerd/nerdctl/releases/download/v{{ nerdctl_version }}/nerdctl-{{ nerdctl_version }}-linux-amd64.tar.gz"
+    dest: "{{ download_dir }}/nerdctl.tar.gz"
+
+- name: Extract nerdctl
+  unarchive:
+    src: "{{ download_dir }}/nerdctl.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/nerdctl
+  when: not ansible_check_mode
+
+# Install security tools
+# Install trivy
+- name: Download trivy {{ trivy_version }}
+  get_url:
+    url: "https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_Linux-64bit.tar.gz"
+    dest: "{{ download_dir }}/trivy.tar.gz"
+
+- name: Extract trivy
+  unarchive:
+    src: "{{ download_dir }}/trivy.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/trivy
+  when: not ansible_check_mode
+
+# Install kube-bench
+- name: Download kube-bench {{ kube_bench_version }}
+  get_url:
+    url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/kube-bench.tar.gz"
+
+- name: Extract kube-bench
+  unarchive:
+    src: "{{ download_dir }}/kube-bench.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/kube-bench
+  when: not ansible_check_mode
+
+# Install kube-hunter
+- name: Install kube-hunter via pipx
+  command: pipx install kube-hunter=={{ kube_hunter_version }}
+  args:
+    creates: /home/{{ ansible_user_id }}/.local/bin/kube-hunter
+
+# Install kubescape
+- name: Download kubescape {{ kubescape_version }}
+  get_url:
+    url: "https://github.com/armosec/kubescape/releases/download/v{{ kubescape_version }}/kubescape-ubuntu-latest"
+    dest: /usr/local/bin/kubescape
+    mode: '0755'
+
+# Install kubectl plugins and utilities
+# Install krew
+- name: Download krew {{ krew_version }}
+  get_url:
+    url: "https://github.com/kubernetes-sigs/krew/releases/download/v{{ krew_version }}/krew-linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/krew.tar.gz"
+
+- name: Extract krew
+  unarchive:
+    src: "{{ download_dir }}/krew.tar.gz"
+    dest: "{{ download_dir }}"
+    remote_src: yes
+    creates: "{{ download_dir }}/krew-linux_amd64"
+  when: not ansible_check_mode
+
+- name: Install krew
+  copy:
+    src: "{{ download_dir }}/krew-linux_amd64"
+    dest: /usr/local/bin/kubectl-krew
+    mode: '0755'
+    remote_src: yes
+  when: not ansible_check_mode
+
+# Install kubectx and kubens
+- name: Download kubectx {{ kubectx_version }}
+  get_url:
+    url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubectx_v{{ kubectx_version }}_linux_x86_64.tar.gz"
+    dest: "{{ download_dir }}/kubectx.tar.gz"
+
+- name: Extract kubectx
+  unarchive:
+    src: "{{ download_dir }}/kubectx.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/kubectx
+  when: not ansible_check_mode
+
+- name: Download kubens {{ kubens_version }}
+  get_url:
+    url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubens_version }}/kubens_v{{ kubens_version }}_linux_x86_64.tar.gz"
+    dest: "{{ download_dir }}/kubens.tar.gz"
+
+- name: Extract kubens
+  unarchive:
+    src: "{{ download_dir }}/kubens.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/kubens
+  when: not ansible_check_mode
+
+# Install k9s
+- name: Download k9s {{ k9s_version }}
+  get_url:
+    url: "https://github.com/derailed/k9s/releases/download/v{{ k9s_version }}/k9s_Linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/k9s.tar.gz"
+
+- name: Extract k9s
+  unarchive:
+    src: "{{ download_dir }}/k9s.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/k9s
+  when: not ansible_check_mode
+
+# Install stern
+- name: Download stern {{ stern_version }}
+  get_url:
+    url: "https://github.com/stern/stern/releases/download/v{{ stern_version }}/stern_{{ stern_version }}_linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/stern.tar.gz"
+
+- name: Extract stern
+  unarchive:
+    src: "{{ download_dir }}/stern.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/stern
+  when: not ansible_check_mode
+
+# Install CLI utilities
+# Install jq
+- name: Download jq {{ jq_version }}
+  get_url:
+    url: "https://github.com/jqlang/jq/releases/download/jq-{{ jq_version }}/jq-linux64"
+    dest: /usr/local/bin/jq
+    mode: '0755'
+
+# Install yq
+- name: Download yq {{ yq_version }}
+  get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_amd64"
+    dest: /usr/local/bin/yq
+    mode: '0755'
+
+# Install bash completion
+- name: Install bash-completion package
+  apt:
+    name: bash-completion
+    state: present
+  when: bash_completion | default(false)
+
+# Install auditd if specified
+- name: Install auditd package
+  apt:
+    name: auditd
+    state: present
+  when: auditd | default(false)
+
+# Install apparmor-utils if specified
+- name: Install apparmor-utils package
+  apt:
+    name: apparmor-utils
+    state: present
+  when: apparmor_utils | default(false)
+
+# Validate kubernetes role installation
+- name: Validate kubernetes role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

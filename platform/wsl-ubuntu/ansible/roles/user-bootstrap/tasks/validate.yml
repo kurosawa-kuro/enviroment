@@ -1,0 +1,31 @@
+---
+- name: Check ~/.ssh directory permissions
+  stat:
+    path: "{{ bootstrap_target_home }}/.ssh"
+  register: ssh_dir_stat
+
+- name: Assert ~/.ssh directory exists
+  assert:
+    that:
+      - ssh_dir_stat.stat.exists
+      - ssh_dir_stat.stat.isdir
+
+- name: Check ~/.gitignore_global exists
+  stat:
+    path: "{{ bootstrap_target_home }}/.gitignore_global"
+  register: gitignore_stat
+
+- name: Assert ~/.gitignore_global exists
+  assert:
+    that:
+      - gitignore_stat.stat.exists
+
+- name: Check ~/.bashrc exists
+  stat:
+    path: "{{ bootstrap_target_home }}/.bashrc"
+  register: bashrc_stat
+
+- name: Assert ~/.bashrc exists
+  assert:
+    that:
+      - bashrc_stat.stat.exists

@@ -1,0 +1,16 @@
+[boot]
+systemd=true
+
+{% if default_wsl_user | default('') | length > 0 %}
+[user]
+default={{ default_wsl_user }}
+
+{% endif %}
+[interop]
+enabled={{ 'true' if wsl_interop_enabled | default(true) else 'false' }}
+appendWindowsPath={{ 'true' if wsl_append_windows_path | default(false) else 'false' }}
+
+[automount]
+enabled=true
+root={{ wsl_automount_root | default('/mnt/') }}
+options={{ wsl_automount_options | default('metadata,umask=22,fmask=11') }}

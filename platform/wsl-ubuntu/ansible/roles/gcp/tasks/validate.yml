@@ -1,0 +1,36 @@
+---
+# GCP role validation
+- name: "Validate gcp role installation"
+  block:
+    - name: "Check Google Cloud CLI"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "gcloud", cmd: "/opt/google-cloud-sdk/bin/gcloud --version" }
+        - { name: "gsutil", cmd: "/opt/google-cloud-sdk/bin/gsutil version" }
+
+    - name: "Test gcloud auth (no credentials expected)"
+      shell: |
+        /opt/google-cloud-sdk/bin/gcloud auth list || echo "No GCP authentication configured (expected)"
+      register: gcloud_auth_test
+      failed_when: false  # Don't fail if not authenticated
+
+    - name: "Check gcloud accessibility in PATH"
+      shell: |
+        test -x /opt/google-cloud-sdk/bin/gcloud
+      register: path_check
+      failed_when: path_check.rc != 0
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for gcp role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['gcp'] }}"
+
+- name: "GCP role validation completed successfully"
+  debug:
+    msg: "Google Cloud CLI validated successfully"

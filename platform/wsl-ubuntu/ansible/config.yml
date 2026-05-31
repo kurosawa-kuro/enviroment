@@ -1,0 +1,75 @@
+---
+# WSL Ubuntu Environment Configuration
+# 必要なコンポーネントのみを有効化してください
+
+components:
+  # 基本システム（通常は必須）
+  base:
+    enabled: true
+    description: "WSL基盤設定と基本的なシステムツール"
+
+  user_bootstrap:
+    enabled: false
+    description: "Git / bashrc / .ssh などのユーザー初期化（opt-in）"
+  
+  # 開発環境
+  rust:
+    enabled: true
+    version: "stable"
+    description: "Rust (rustup) — 非MLのメイン言語"
+
+  nodejs:
+    enabled: true
+    version: "22.11.0"
+    description: "Node.js ランタイム"
+  
+  go:
+    enabled: true
+    version: "1.25.0"
+    description: "Go言語"
+  
+  java:
+    enabled: false  # Java不要の場合
+    version: "21"
+    description: "Java/JDK（オプション）"
+  
+  kotlin:
+    enabled: false  # Kotlin不要の場合
+    version: "2.2.10"
+    description: "Kotlin（オプション）"
+  
+  python:
+    enabled: true
+    version: "3.12.6"
+    description: "Python"
+  
+  # コンテナ
+  docker:
+    enabled: true
+    description: "Docker コンテナエンジン"
+  
+  kubernetes:
+    enabled: true
+    description: "Kubernetes ツール (kubectl, helm, etc.)"
+  
+  # データベース
+  postgresql:
+    enabled: false  # PostgreSQL不要の場合
+    version: "15"
+    port: 5432
+    description: "PostgreSQL データベース"
+  
+  # クラウド
+  gcp:
+    enabled: true
+    version: "latest"
+    description: "Google Cloud CLI (gcloud) — メインクラウド"
+
+  aws:
+    enabled: true
+    description: "AWS CLI とツール"
+
+  terraform:
+    enabled: true
+    version: "1.12.2"
+    description: "Infrastructure as Code"

@@ -1,0 +1,79 @@
+---
+# PostgreSQL role validation
+- name: "Validate postgresql role installation"
+  block:
+    - name: "Check PostgreSQL installation"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "psql", cmd: "psql --version" }
+        - { name: "postgres", cmd: "postgres --version" }
+        - { name: "pg_config", cmd: "pg_config --version" }
+        - { name: "neonctl", cmd: "neonctl --version" }
+
+    - name: "Check PostgreSQL service status"
+      systemd:
+        name: postgresql
+        state: started
+      check_mode: yes
+      register: postgres_service
+
+    - name: "Test PostgreSQL connectivity"
+      postgresql_ping:
+        login_host: localhost
+        login_port: "{{ postgres_port | default(5432) }}"
+        login_user: "{{ postgres_user | default('postgres') }}"
+        login_password: "{{ postgres_password | default('postgres') }}"
+      register: postgres_ping
+
+    - name: "Check PostgreSQL databases"
+      postgresql_query:
+        login_host: localhost
+        login_port: "{{ postgres_port | default(5432) }}"
+        login_user: "{{ postgres_user | default('postgres') }}"
+        login_password: "{{ postgres_password | default('postgres') }}"
+        db: "{{ postgres_user | default('postgres') }}"
+        query: "SELECT datname FROM pg_database WHERE datname IN ('{{ postgres_db_local | default('local_dev') }}', '{{ postgres_db_test | default('local_test') }}')"
+      register: db_check
+
+    - name: "Check PostgreSQL extensions"
+      postgresql_query:
+        login_host: localhost
+        login_port: "{{ postgres_port | default(5432) }}"
+        login_user: "{{ postgres_user | default('postgres') }}"
+        login_password: "{{ postgres_password | default('postgres') }}"
+        db: "{{ postgres_db_local | default('local_dev') }}"
+        query: "SELECT extname FROM pg_extension WHERE extname IN ('postgis', 'pgcrypto', 'uuid-ossp')"
+      register: extension_check
+
+    - name: "Test database operations"
+      postgresql_query:
+        login_host: localhost
+        login_port: "{{ postgres_port | default(5432) }}"
+        login_user: "{{ postgres_user | default('postgres') }}"
+        login_password: "{{ postgres_password | default('postgres') }}"
+        db: "{{ postgres_db_local | default('local_dev') }}"
+        query: |
+          CREATE TABLE IF NOT EXISTS validation_test (
+            id SERIAL PRIMARY KEY,
+            test_data VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW()
+          );
+          INSERT INTO validation_test (test_data) VALUES ('Validation successful');
+          SELECT * FROM validation_test WHERE test_data = 'Validation successful';
+          DROP TABLE validation_test;
+      register: db_operation_test
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for postgresql role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['postgresql'] }}"
+
+- name: "PostgreSQL validation completed successfully"
+  debug:
+    msg: "PostgreSQL database and extensions validated successfully"

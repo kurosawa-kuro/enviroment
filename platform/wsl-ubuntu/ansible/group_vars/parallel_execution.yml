@@ -1,0 +1,71 @@
+---
+# Parallel execution configuration for roles
+# Based on dependency analysis from meta/main.yml files
+
+# Execution phases based on dependencies
+execution_phases:
+  phase_1:
+    # Foundation phase - must run first
+    - base
+  
+  phase_2:
+    # Independent roles that only depend on base
+    # Can run in parallel
+    - development-runtime
+    - aws
+    - postgresql
+  
+  phase_3:
+    # Roles that depend on phase_2 completion
+    # docker must complete before kubernetes
+    - docker
+  
+  phase_4:
+    # Roles that depend on docker
+    - kubernetes
+
+# Parallel execution groups
+parallel_groups:
+  independent_tools:
+    # These roles can run completely in parallel
+    # No interdependencies, only base dependency
+    roles:
+      - development-runtime
+      - aws
+      - postgresql
+    max_parallel: 3
+    timeout: 1800  # 30 minutes
+  
+  container_stack:
+    # Docker must complete before kubernetes
+    roles:
+      - docker
+      - kubernetes
+    max_parallel: 1  # Sequential execution
+    timeout: 900   # 15 minutes
+
+# Performance optimization settings
+performance_settings:
+  # Enable parallel downloads
+  parallel_downloads: true
+  max_download_concurrent: 3
+  
+  # Cache settings
+  enable_cache: true
+  cache_retention_days: 30
+  
+  # Resource limits
+  max_memory_usage: "4GB"
+  max_cpu_cores: 2
+  
+  # Network optimization
+  download_retries: 3
+  connection_timeout: 30
+  read_timeout: 300
+
+# Monitoring settings for parallel execution
+monitoring:
+  track_performance: true
+  log_timing: true
+  record_resource_usage: true
+  failure_threshold: 1  # Stop if more than 1 role fails

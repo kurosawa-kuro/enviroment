@@ -1,0 +1,494 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EKS Cluster - Main Infrastructure'
+
+# =============================================================================
+# Template Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Stack Dependencies"
+        Parameters:
+          - PrerequisitesStackName
+          - NetworkStackName
+      - Label:
+          default: "Cluster Configuration"
+        Parameters:
+          - ClusterName
+          - KubernetesVersion
+          - EndpointPublicAccess
+          - EndpointPrivateAccess
+      - Label:
+          default: "Node Group Configuration"
+        Parameters:
+          - NodeInstanceType
+          - NodeGroupMinSize
+          - NodeGroupDesiredSize
+          - NodeGroupMaxSize
+      - Label:
+          default: "Resource Tagging"
+        Parameters:
+          - Environment
+          - Version
+          - Project
+          - Owner
+
+# =============================================================================
+# Input Parameters
+# =============================================================================
+Parameters:
+  # Stack Dependencies
+  PrerequisitesStackName:
+    Type: String
+    Default: eks-prerequisites
+    Description: Name of the prerequisites stack (01-prerequisites)
+    MinLength: 1
+    MaxLength: 128
+
+  NetworkStackName:
+    Type: String
+    Default: eks-network
+    Description: Name of the network stack (02-network)
+    MinLength: 1
+    MaxLength: 128
+
+  # Cluster Configuration
+  ClusterName:
+    Type: String
+    Default: eks-platform
+    Description: Name of the EKS enterprise platform cluster
+    MinLength: 1
+    MaxLength: 100
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+
+  KubernetesVersion:
+    Type: String
+    Default: '1.31'
+    Description: Kubernetes version for the EKS cluster
+    AllowedValues: ['1.29', '1.30', '1.31']
+
+  # EKS Endpoint Access Parameters
+  EndpointPublicAccess:
+    Type: String
+    Default: 'true'  # 開発環境向けにtrueに変更
+    Description: Enable public API server endpoint (true for development)
+    AllowedValues: ['true', 'false']
+
+  EndpointPrivateAccess:
+    Type: String
+    Default: 'true'
+    Description: Enable private API server endpoint
+    AllowedValues: ['true', 'false']
+
+  # Node Group Configuration
+  NodeInstanceType:
+    Type: String
+    Default: m5.large
+    Description: EC2 instance type for EKS worker nodes
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m5.large
+      - m5.xlarge
+
+  NodeGroupMinSize:
+    Type: Number
+    Default: 1
+    Description: Minimum size of the node group
+    MinValue: 1
+    MaxValue: 10
+
+  NodeGroupDesiredSize:
+    Type: Number
+    Default: 2
+    Description: Desired size of the node group
+    MinValue: 1
+    MaxValue: 10
+
+  NodeGroupMaxSize:
+    Type: Number
+    Default: 3
+    Description: Maximum size of the node group
+    MinValue: 1
+    MaxValue: 10
+
+  # Resource Tagging
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment name
+    AllowedValues: [development, staging, production, learning]
+
+  Version:
+    Type: String
+    Default: v2
+    Description: Version suffix for resource names
+
+  Project:
+    Type: String
+    Default: eks-platform
+    Description: Project name
+
+  Owner:
+    Type: String
+    Default: admin
+    Description: Owner of the resources
+
+# =============================================================================
+# Conditions
+# =============================================================================
+Conditions:
+  EnablePublicAccess: !Equals [!Ref EndpointPublicAccess, 'true']
+  EnablePrivateAccess: !Equals [!Ref EndpointPrivateAccess, 'true']
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================
+  # IAM Roles for EKS
+  # ============================================
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ClusterName}-cluster-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+
+  NodeInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ClusterName}-node-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !Sub
+                    - '${BucketArn}'
+                    - BucketArn: !ImportValue
+                        Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+                  - !Sub
+                    - '${BucketArn}/*'
+                    - BucketArn: !ImportValue
+                        Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+
+  # ============================================
+  # EKS Cluster
+  # ============================================
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      Version: !Ref KubernetesVersion
+      RoleArn: !GetAtt EKSClusterRole.Arn
+      ResourcesVpcConfig:
+        SubnetIds:
+          # Use both public and private subnets for flexibility
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-PublicSubnet1Id'
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-PublicSubnet2Id'
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-PrivateSubnet1Id'
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-PrivateSubnet2Id'
+        SecurityGroupIds:
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-EKSClusterSecurityGroupId'
+        # Use parameters for endpoint access
+        EndpointPublicAccess: !Ref EndpointPublicAccess
+        EndpointPrivateAccess: !Ref EndpointPrivateAccess
+        PublicAccessCidrs:
+          - "0.0.0.0/0"
+      Logging:
+        ClusterLogging:
+          EnabledTypes:
+            - Type: api
+            - Type: audit
+            - Type: authenticator
+            - Type: controllerManager
+            - Type: scheduler
+      Tags:
+        - Key: Name
+          Value: !Ref ClusterName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+
+  # ============================================
+  # Security Group for Node Group
+  # ============================================
+  NodeGroupSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ClusterName}-nodegroup-sg'
+      GroupDescription: Security group for EKS Node Group
+      VpcId: !ImportValue
+        Fn::Sub: '${NetworkStackName}-VpcId'
+      SecurityGroupIngress:
+        # EKS Control Plane必須通信
+        - IpProtocol: tcp
+          FromPort: 10250
+          ToPort: 10250
+          SourceSecurityGroupId: !ImportValue
+            Fn::Sub: '${NetworkStackName}-EKSClusterSecurityGroupId'
+          Description: Control plane to kubelet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !ImportValue
+            Fn::Sub: '${NetworkStackName}-EKSClusterSecurityGroupId'
+          Description: Control plane to nodes secure communication
+        # Additional ingress from cluster security group
+        - IpProtocol: tcp
+          FromPort: 1025
+          ToPort: 65535
+          SourceSecurityGroupId: !GetAtt EKSCluster.ClusterSecurityGroupId
+          Description: Allow communication from cluster security group
+      SecurityGroupEgress:
+        # Allow all outbound traffic
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic for EKS functionality
+      Tags:
+        - Key: Name
+          Value: !Sub '${ClusterName}-nodegroup-sg'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+
+  # Allow nodes to communicate with each other
+  NodeGroupSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref NodeGroupSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref NodeGroupSecurityGroup
+      Description: Allow node-to-node communication
+
+  # ============================================
+  # Additional Security Group Rules
+  # ============================================
+  # Allow EKS managed cluster security group to communicate with nodes
+  ClusterToNodeGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: EKSCluster
+    Properties:
+      GroupId: !Ref NodeGroupSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !GetAtt EKSCluster.ClusterSecurityGroupId
+      Description: Allow all traffic from EKS managed cluster security group
+
+  # Allow nodes to communicate with EKS API
+  NodeGroupToClusterEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    DependsOn: EKSCluster
+    Properties:
+      GroupId: !Ref NodeGroupSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      DestinationSecurityGroupId: !GetAtt EKSCluster.ClusterSecurityGroupId
+      Description: Allow nodes to communicate with cluster API
+
+  # ============================================
+  # Launch Template for Node Group
+  # ============================================
+  NodeGroupLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub '${ClusterName}-nodegroup-lt'
+      LaunchTemplateData:
+        SecurityGroupIds:
+          - !Ref NodeGroupSecurityGroup
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              DeleteOnTermination: true
+              Encrypted: false
+              VolumeSize: 20
+              VolumeType: gp3
+        MetadataOptions:
+          HttpTokens: optional
+          HttpPutResponseHopLimit: 2
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: !Sub '${ClusterName}-node'
+              - Key: Environment
+                Value: !Ref Environment
+              - Key: Project
+                Value: !Ref Project
+              - Key: Owner
+                Value: !Ref Owner
+          - ResourceType: volume
+            Tags:
+              - Key: Name
+                Value: !Sub '${ClusterName}-node-volume'
+              - Key: Environment
+                Value: !Ref Environment
+              - Key: Project
+                Value: !Ref Project
+
+  # ============================================
+  # EKS Node Group
+  # ============================================
+  NodeGroup:
+    Type: AWS::EKS::Nodegroup
+    DependsOn: 
+      - EKSCluster
+      - NodeGroupLaunchTemplate
+    Properties:
+      NodegroupName: !Sub '${ClusterName}-node-group'
+      ClusterName: !Ref ClusterName
+      NodeRole: !GetAtt NodeInstanceRole.Arn
+      Subnets:
+        - !ImportValue
+          Fn::Sub: '${NetworkStackName}-PrivateSubnet1Id'
+        - !ImportValue
+          Fn::Sub: '${NetworkStackName}-PrivateSubnet2Id'
+      ScalingConfig:
+        MinSize: !Ref NodeGroupMinSize
+        DesiredSize: !Ref NodeGroupDesiredSize
+        MaxSize: !Ref NodeGroupMaxSize
+      InstanceTypes:
+        - !Ref NodeInstanceType
+      CapacityType: ON_DEMAND
+      UpdateConfig:
+        MaxUnavailable: 1
+      AmiType: AL2_x86_64
+      LaunchTemplate:
+        Id: !Ref NodeGroupLaunchTemplate
+        Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+      Labels:
+        Environment: !Ref Environment
+        Project: !Ref Project
+      Tags:
+        Name: !Sub '${ClusterName}-node'
+        Environment: !Ref Environment
+        Project: !Ref Project
+        Owner: !Ref Owner
+
+  # ============================================
+  # SSM Parameters for sharing values
+  # ============================================
+  ClusterNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/cluster-name'
+      Type: String
+      Value: !Ref ClusterName
+      Description: EKS cluster name
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+  ClusterEndpointParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/cluster-endpoint'
+      Type: String
+      Value: !GetAtt EKSCluster.Endpoint
+      Description: EKS cluster endpoint
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+  NodeGroupSecurityGroupParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/nodegroup-sg-id'
+      Type: String
+      Value: !Ref NodeGroupSecurityGroup
+      Description: Node group security group ID
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  ClusterName:
+    Description: EKS Cluster Name
+    Value: !Ref ClusterName
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterName'
+
+  ClusterEndpoint:
+    Description: EKS Cluster Endpoint
+    Value: !GetAtt EKSCluster.Endpoint
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterEndpoint'
+
+  ClusterSecurityGroupId:
+    Description: EKS Cluster Security Group ID
+    Value: !GetAtt EKSCluster.ClusterSecurityGroupId
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterSecurityGroupId'
+
+  ClusterCertificateAuthority:
+    Description: EKS Cluster Certificate Authority
+    Value: !GetAtt EKSCluster.CertificateAuthorityData
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterCA'
+
+  NodeGroupId:
+    Description: EKS Node Group ID
+    Value: !Ref NodeGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-NodeGroupId'
+
+  NodeGroupSecurityGroupId:
+    Description: Security Group ID for EKS Node Group
+    Value: !Ref NodeGroupSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-NodeGroupSecurityGroupId'
+
+  KubectlConfigCommand:
+    Description: Command to configure kubectl
+    Value: !Sub |
+      aws eks update-kubeconfig --region ${AWS::Region} --name ${ClusterName}

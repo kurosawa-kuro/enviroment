@@ -1,0 +1,27 @@
+---
+# Development runtime dependencies
+dependencies:
+  - role: base
+
+galaxy_info:
+  role_name: development-runtime
+  author: WSL Ubuntu Environment Setup
+  description: Development runtimes (Node.js, Go, Java, Kotlin, Maven, Gradle)
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - development
+    - runtime
+    - nodejs
+    - golang
+    - java
+    - kotlin
+    - maven
+    - gradle
+    - programming

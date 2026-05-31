@@ -1,0 +1,28 @@
+---
+- name: Check if running on Ubuntu
+  fail:
+    msg: "This playbook is designed for Ubuntu systems only"
+  when: ansible_distribution != "Ubuntu"
+
+- name: Check Ubuntu version
+  debug:
+    msg: "Running on Ubuntu {{ ansible_distribution_version }}"
+
+- name: Check if WSL Environment
+  shell: grep -qi microsoft /proc/version
+  register: wsl_check
+  failed_when: false
+  changed_when: false
+
+- name: Display WSL status
+  debug:
+    msg: "{{ 'Running in WSL Environment' if wsl_check.rc == 0 else 'Running on native Ubuntu' }}"
+
+- name: Check available disk space
+  shell: df -h /
+  register: disk_space
+  changed_when: false
+
+- name: Display disk space
+  debug:
+    msg: "Available disk space: {{ disk_space.stdout_lines }}"

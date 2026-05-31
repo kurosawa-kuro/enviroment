@@ -1,0 +1,76 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - config.yml
+  
+  tasks:
+    - name: Load configuration
+      debug:
+        msg: "設定ファイルを読み込みました"
+    
+    - name: Install base system tools
+      import_role:
+        name: base
+      when: components.base.enabled | default(true)
+
+    - name: Apply user bootstrap
+      import_role:
+        name: user-bootstrap
+      when: components.user_bootstrap.enabled | default(false)
+
+    - name: Install Rust
+      import_role:
+        name: development-runtime
+        tasks_from: rust
+      when: components.rust.enabled | default(false)
+
+    - name: Install Node.js
+      import_role:
+        name: development-runtime
+        tasks_from: nodejs
+      when: components.nodejs.enabled | default(false)
+
+    - name: Install Go
+      import_role:
+        name: development-runtime
+        tasks_from: golang
+      when: components.go.enabled | default(false)
+
+    - name: Install Java
+      import_role:
+        name: development-runtime
+        tasks_from: java
+      when: components.java.enabled | default(false)
+
+    - name: Install Kotlin
+      import_role:
+        name: development-runtime
+        tasks_from: kotlin
+      when: components.kotlin.enabled | default(false)
+
+    - name: Install Docker
+      import_role:
+        name: docker
+      when: components.docker.enabled | default(false)
+
+    - name: Install Kubernetes tools
+      import_role:
+        name: kubernetes
+      when: components.kubernetes.enabled | default(false)
+
+    - name: Install AWS and cloud tools
+      import_role:
+        name: aws
+      when: components.aws.enabled | default(false)
+
+    - name: Install Google Cloud CLI
+      import_role:
+        name: gcp
+      when: components.gcp.enabled | default(false)
+
+    - name: Setup PostgreSQL database
+      import_role:
+        name: postgresql
+      when: components.postgresql.enabled | default(false)

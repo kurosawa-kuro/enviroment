@@ -1,0 +1,25 @@
+---
+# PostgreSQL role dependencies
+dependencies:
+  - role: base
+
+galaxy_info:
+  role_name: postgresql
+  author: WSL Ubuntu Environment Setup
+  description: PostgreSQL 15 server with extensions (PostGIS, pgcrypto, uuid-ossp)
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - postgresql
+    - database
+    - sql
+    - postgis
+    - pgcrypto
+    - uuid
+    - data

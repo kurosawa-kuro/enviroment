@@ -1,0 +1,37 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+  tasks:
+    - name: Install base system tools
+      import_role:
+        name: base
+
+    - name: Apply user bootstrap
+      import_role:
+        name: user-bootstrap
+      when: user_bootstrap_enabled | default(false)
+
+    - name: Install development runtimes
+      import_role:
+        name: development-runtime
+
+    - name: Install Docker
+      import_role:
+        name: docker
+
+    - name: Install Kubernetes tools
+      import_role:
+        name: kubernetes
+
+    - name: Install AWS and cloud tools
+      import_role:
+        name: aws
+
+    - name: Install Google Cloud CLI
+      import_role:
+        name: gcp
+
+    - name: Setup PostgreSQL database
+      import_role:
+        name: postgresql

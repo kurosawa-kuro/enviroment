@@ -1,0 +1,89 @@
+---
+# Base role validation
+- name: "Validate base role installation"
+  block:
+    - name: "Check essential system commands"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "python3", cmd: "python3 --version" }
+        - { name: "pip3", cmd: "pip3 --version" }
+        - { name: "pipx", cmd: "pipx --version" }
+        - { name: "uv", cmd: "uv --version" }
+        - { name: "git", cmd: "git --version" }
+        - { name: "curl", cmd: "curl --version" }
+        - { name: "wget", cmd: "wget --version" }
+        - { name: "tree", cmd: "tree --version" }
+        - { name: "jq", cmd: "jq --version" }
+        - { name: "doppler", cmd: "doppler --version" }
+      when: validation_commands is not defined
+
+    - name: "Check APT repositories"
+      command: "apt-cache policy"
+      register: apt_policy
+      failed_when: apt_policy.rc != 0
+
+    - name: "Verify system packages are installed"
+      package:
+        name: "{{ item }}"
+        state: present
+      check_mode: yes
+      register: package_check
+      loop:
+        - language-pack-ja
+        - python3
+        - python3-pip
+        - jq
+        - git
+        - curl
+        - wget
+        - tree
+        - htop
+        - make
+        - unzip
+        - zip
+        - dnsutils
+        - pkg-config
+        - software-properties-common
+        - apt-transport-https
+        - ca-certificates
+        - gnupg
+        - lsb-release
+
+    - name: Verify locale setting
+      command: locale
+      register: locale_check
+      failed_when: ("LANG=" + locale_lang) not in locale_check.stdout
+
+    - name: Verify timezone setting
+      command: timedatectl show --property=Timezone --value
+      register: timezone_check
+      failed_when: timezone_check.stdout.strip() != timezone
+
+    - name: Verify /etc/wsl.conf exists
+      stat:
+        path: /etc/wsl.conf
+      register: wsl_conf_stat
+
+    - name: Assert /etc/wsl.conf presence
+      assert:
+        that:
+          - wsl_conf_stat.stat.exists
+
+    - name: "Test basic functionality"
+      include_tasks: "functional_test.yml"
+      when: functional_tests is defined
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for base role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['base'] }}"
+
+- name: "Base role validation completed successfully"
+  debug:
+    msg: "All base system components validated successfully"

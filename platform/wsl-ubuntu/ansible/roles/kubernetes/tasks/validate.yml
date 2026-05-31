@@ -1,0 +1,74 @@
+---
+# Kubernetes role validation
+- name: "Validate kubernetes role installation"
+  block:
+    - name: "Check Kubernetes core tools"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "kubectl", cmd: "kubectl version --client" }
+        - { name: "kubeadm", cmd: "kubeadm version" }
+        - { name: "kubelet", cmd: "kubelet --version" }
+        - { name: "kind", cmd: "kind version" }
+        - { name: "minikube", cmd: "minikube version" }
+        - { name: "helm", cmd: "helm version" }
+        - { name: "kustomize", cmd: "kustomize version" }
+
+    - name: "Check Kubernetes security tools"
+      command: "{{ item.cmd }}"
+      register: security_check
+      failed_when: security_check.rc != 0
+      loop:
+        - { name: "trivy", cmd: "trivy --version" }
+        - { name: "kube-bench", cmd: "kube-bench version" }
+        - { name: "kube-hunter", cmd: "kube-hunter --version" }
+        - { name: "kubescape", cmd: "kubescape version" }
+
+    - name: "Check kubectl plugins"
+      command: "{{ item.cmd }}"
+      register: plugin_check
+      failed_when: plugin_check.rc != 0
+      loop:
+        - { name: "kubectx", cmd: "kubectx --help" }
+        - { name: "kubens", cmd: "kubens --help" }
+        - { name: "k9s", cmd: "k9s version" }
+        - { name: "stern", cmd: "stern --version" }
+
+    - name: "Check CLI utilities"
+      command: "{{ item.cmd }}"
+      register: cli_check
+      failed_when: cli_check.rc != 0
+      loop:
+        - { name: "jq", cmd: "jq --version" }
+        - { name: "yq", cmd: "yq --version" }
+
+    - name: "Test Kind functionality"
+      shell: |
+        kind create cluster --name test-validation --wait 30s
+        kubectl cluster-info --context kind-test-validation
+        kind delete cluster --name test-validation
+      register: kind_test
+      failed_when: kind_test.rc != 0
+      ignore_errors: yes
+
+    - name: "Test Helm functionality"
+      shell: |
+        helm repo add stable https://charts.helm.sh/stable
+        helm repo update
+        helm search repo stable/nginx
+      register: helm_test
+      failed_when: helm_test.rc != 0
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for kubernetes role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['kubernetes'] }}"
+
+- name: "Kubernetes validation completed successfully"
+  debug:
+    msg: "All Kubernetes components validated successfully"

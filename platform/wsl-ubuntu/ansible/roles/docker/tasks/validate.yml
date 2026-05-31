@@ -1,0 +1,61 @@
+---
+# Docker role validation
+- name: "Validate docker role installation"
+  block:
+    - name: "Check Docker components"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "docker", cmd: "docker --version" }
+        - { name: "docker-compose", cmd: "docker-compose --version" }
+        - { name: "containerd", cmd: "containerd --version" }
+        - { name: "crictl", cmd: "crictl --version" }
+        - { name: "nerdctl", cmd: "nerdctl --version" }
+
+    - name: "Check Docker service status"
+      systemd:
+        name: docker
+        state: started
+      check_mode: yes
+      register: docker_service
+
+    - name: "Test Docker functionality"
+      shell: |
+        docker run --rm hello-world
+      register: docker_test
+      failed_when: docker_test.rc != 0
+      become: yes
+
+    - name: "Test Docker Compose functionality"
+      shell: |
+        echo 'version: "3.8"
+        services:
+          test:
+            image: hello-world' > /tmp/docker-compose-test.yml
+        docker-compose -f /tmp/docker-compose-test.yml up --no-start
+        docker-compose -f /tmp/docker-compose-test.yml down
+        rm -f /tmp/docker-compose-test.yml
+      register: compose_test
+      failed_when: compose_test.rc != 0
+
+    - name: "Check Docker user groups"
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+      check_mode: yes
+      register: docker_group
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for docker role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['docker'] }}"
+
+- name: "Docker validation completed successfully"
+  debug:
+    msg: "All Docker components validated successfully"

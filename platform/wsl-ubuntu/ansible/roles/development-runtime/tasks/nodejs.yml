@@ -1,0 +1,12 @@
+---
+- name: Install NodeSource repository for Node.js {{ nodejs_version }}
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_{{ nodejs_version.split('.')[0] }}.x | bash -
+  args:
+    executable: /bin/bash
+
+- name: Install Node.js {{ nodejs_version }}
+  apt:
+    name: "nodejs={{ nodejs_version }}*"
+    state: present
+    update_cache: yes

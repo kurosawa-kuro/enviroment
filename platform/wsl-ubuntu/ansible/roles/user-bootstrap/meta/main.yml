@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: WSL Ubuntu Environment Setup
+  description: Optional user bootstrap for Git, shell, and SSH permissions
+  company: Environment Setup
+  license: MIT
+  min_ansible_version: "2.9"

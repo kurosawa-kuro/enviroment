@@ -1,0 +1,226 @@
+# =============================================================================
+# CloudFormation 設定ファイル - セキュリティ強化版
+# =============================================================================
+
+# 基本設定
+basic:
+  AwsRegion: ap-northeast-1
+  Environment: learning
+  ProjectName: eks-platform
+  ClusterName: eks-platform
+  Owner: admin
+  Version: v2
+
+# 所要時間
+TimeEstimation:
+  Prerequisites: 3
+  IamRole: 3
+  Network: 2
+  Platform: 20
+  ALB: 4
+  Bastion: 10
+
+# スタック名
+Stacks:
+  Prerequisites: "${basic.ProjectName}-prerequisites-${basic.Version}"
+  IamRole: "${basic.ProjectName}-iam-role-${basic.Version}"
+  Network: "${basic.ProjectName}-network-${basic.Version}"
+  Platform: "${basic.ProjectName}-platform-${basic.Version}"
+  ALB: "${basic.ProjectName}-alb-${basic.Version}"
+  Bastion: "${basic.ProjectName}-bastion-${basic.Version}"
+
+# テンプレートファイル
+Templates:
+  Prerequisites: templates/01-prerequisites.yaml
+  IamRole: templates/02-iam-role.yaml
+  Network: templates/03-network.yaml
+  Platform: templates/04-eks.yaml
+  ALB: templates/05-alb.yaml
+  Bastion: templates/06-bastion.yaml
+
+# パラメータ設定
+Parameters:
+  # ネットワーク設定 - セキュリティ強化 (プライベートファースト)
+  Network:
+    VpcCidr: 10.0.0.0/16
+    PublicSubnet1Cidr: 10.0.1.0/24
+    PublicSubnet2Cidr: 10.0.2.0/24
+    PrivateSubnet1Cidr: 10.0.10.0/24
+    PrivateSubnet2Cidr: 10.0.11.0/24
+    # セキュリティ要件: プライベートサブネット用アウトバウンド通信
+    EnableNatGateway: true  # 必須: ECRプル、パッケージ更新に必要
+
+  # S3設定
+  S3:
+    BucketPrefix: eks-platform-bootstrap
+    EnableVersioning: true
+    EnableEncryption: true
+
+  # セキュリティ設定
+  Security:
+    # 学習環境向け: KMS暗号化を無効化（コスト削減）
+    # 本番環境では必ず true に設定
+    EnableKmsEncryption: false
+    # 監査ログ設定
+    EnableCloudTrail: false  # 学習環境では無効
+    EnableVpcFlowLogs: false # 学習環境では無効
+    EnableConfigRules: false # 学習環境では無効
+
+  # ECR設定
+  ECR:
+    RepositoryName: "${basic.ProjectName}-app-${basic.Version}"
+    ImageScanOnPush: true  # セキュリティスキャン有効
+
+  # EKSクラスター設定
+  EKS:
+    KubernetesVersion: "1.31"
+    KubernetesVersionsAllowed: ["1.29", "1.30", "1.31"]
+    
+    # ノード設定 - 高速化対応
+    NodeInstanceType: m5.large  # 高速化のためm5.largeに変更
+    NodeInstanceTypesAllowed: ["t3.small", "t3.medium", "t3.large", "m5.large"]
+    NodeGroupMinSize: 1
+    NodeGroupDesiredSize: 1  # コスト制御のため1に変更
+    NodeGroupMaxSize: 3
+    
+    # セキュリティ設定: EKSエンドポイントアクセス制御
+    # 学習環境: 両方有効（開発の利便性）
+    # 本番環境: EndpointPublicAccess を false に設定
+    EndpointPublicAccess: true   # 開発環境向け
+    EndpointPrivateAccess: true  # 常に有効
+    
+    # パブリックアクセス制限（EndpointPublicAccess=trueの場合）
+    PublicAccessCidrs: 
+      - "0.0.0.0/0"  # 学習環境: 全IP許可
+      # 本番環境例:
+      # - "203.0.113.0/24"  # 企業IP範囲のみ
+    
+    # クラスターロギング設定
+    EnableLogging: true
+    LogTypes:
+      - api
+      - audit
+      - authenticator
+      - controllerManager
+      - scheduler
+
+  # Bastion設定
+  Bastion:
+    InstanceType: t3.micro
+    InstanceTypesAllowed: ["t3.micro", "t3.small", "t3.medium"]
+    # AMI設定
+    UbuntuAmiParameter: "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
+    # アクセス方法: SSM Session Managerのみ（SSH無効）
+    EnableSSH: false  # セキュリティ強化
+
+  # ストレージ設定
+  Storage:
+    EbsVolumeSize: 20
+    EbsVolumeType: "gp3"
+    DeleteOnTermination: true
+    # 学習環境: KMS暗号化無効
+    # 本番環境: true に設定
+    EncryptionEnabled: false
+
+  # ALB設定
+  ALB:
+    # ターゲットグループ設定
+    TargetGroupPort: 30080
+    TargetGroupProtocol: "HTTP"
+    
+    # ヘルスチェック設定
+    HealthCheckEnabled: true
+    HealthCheckPath: "/"
+    HealthCheckProtocol: "HTTP"
+    HealthCheckIntervalSeconds: 30
+    HealthCheckTimeoutSeconds: 5
+    HealthyThresholdCount: 2
+    UnhealthyThresholdCount: 3
+    HealthCheckMatcher: "200,404"
+    
+    # SSL/TLS設定（本番環境用）
+    EnableHTTPS: false  # 学習環境では無効
+    # CertificateArn: ""  # ACM証明書ARN（HTTPS有効時）
+
+  # ポート設定
+  Ports:
+    NodePortRangeStart: 30000
+    NodePortRangeEnd: 32767
+    HttpPort: 80
+    HttpsPort: 443
+    AltHttpPort: 8080
+
+# セキュリティポリシー
+SecurityPolicies:
+  # ネットワーク分離
+  NetworkIsolation:
+    UsePrivateSubnets: true
+    UsePublicSubnets: false  # ワーカーノードには使用しない
+    
+  # アクセス制御
+  AccessControl:
+    BastionAccess: "SSM_ONLY"  # SSH無効
+    KubectlAccess: "BASTION_ONLY"  # Bastion経由のみ
+    
+  # データ保護
+  DataProtection:
+    EncryptionAtRest: false  # 学習環境: 無効（本番: true）
+    EncryptionInTransit: true  # 常に有効
+    
+  # 監査・コンプライアンス
+  Compliance:
+    EnableAuditLogs: true  # EKS監査ログ
+    RetentionDays: 7  # 学習環境: 短期保持
+
+# デプロイメント順序
+DeploymentOrder:
+  - cleanup        # リソースクリーンアップ (削除時のみ)
+  - prerequisites  # ECR, S3の前提リソース
+  - iam_role       # IAMロールとポリシー
+  - network        # VPC, サブネット, セキュリティグループ
+  - platform       # EKSクラスターとノードグループ
+  - alb            # Application Load Balancer
+  - bastion        # Bastion Host
+
+# タグ設定
+Tags:
+  Common:
+    Environment: "${basic.Environment}"
+    Project: "${basic.ProjectName}"
+    Owner: "${basic.Owner}"
+    Version: "${basic.Version}"
+    ManagedBy: "CloudFormation"
+    SecurityLevel: "Learning"  # Learning/Development/Production
+  
+  Compliance:
+    DataClassification: "Internal"
+    ComplianceLevel: "Basic"  # Basic/Standard/High
+    BackupRequired: "No"  # 学習環境
+
+# 環境別オーバーライド設定
+EnvironmentOverrides:
+  learning:
+    EnableKmsEncryption: false
+    EnableNatGateway: true
+    EndpointPublicAccess: true
+    NodeInstanceType: t3.medium
+    
+  development:
+    EnableKmsEncryption: false
+    EnableNatGateway: true
+    EndpointPublicAccess: true
+    NodeInstanceType: t3.medium
+    
+  staging:
+    EnableKmsEncryption: true
+    EnableNatGateway: true
+    EndpointPublicAccess: false
+    NodeInstanceType: m5.large
+    
+  production:
+    EnableKmsEncryption: true
+    EnableNatGateway: true
+    EndpointPublicAccess: false
+    NodeInstanceType: m5.xlarge
+    PublicAccessCidrs:
+      - "203.0.113.0/24"  # 企業IP範囲のみ

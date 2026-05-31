@@ -1,0 +1,110 @@
+---
+- name: Resolve bootstrap target user
+  set_fact:
+    bootstrap_target_user: >-
+      {{
+        default_wsl_user
+        if (default_wsl_user | default('') | length > 0)
+        else (ansible_env.SUDO_USER | default(ansible_user_id))
+      }}
+
+- name: Resolve bootstrap target home
+  set_fact:
+    bootstrap_target_home: "/home/{{ bootstrap_target_user }}"
+
+- name: Ensure ~/.ssh directory permissions
+  file:
+    path: "{{ bootstrap_target_home }}/.ssh"
+    state: directory
+    owner: "{{ bootstrap_target_user }}"
+    group: "{{ bootstrap_target_user }}"
+    mode: '0700'
+
+- name: Install ~/.gitignore_global
+  copy:
+    dest: "{{ bootstrap_target_home }}/.gitignore_global"
+    owner: "{{ bootstrap_target_user }}"
+    group: "{{ bootstrap_target_user }}"
+    mode: '0644'
+    content: |
+      .env
+      .env.*
+      !.env.example
+      .DS_Store
+      node_modules/
+      __pycache__/
+      .venv/
+
+- name: Configure global git excludesfile
+  command: git config --global core.excludesfile "{{ git_global_excludesfile }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+
+- name: Configure global git default branch
+  command: git config --global init.defaultBranch "{{ git_default_branch }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+
+- name: Configure global git pull.rebase
+  command: git config --global pull.rebase "{{ git_pull_rebase }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+
+- name: Configure global git core.autocrlf
+  command: git config --global core.autocrlf "{{ git_core_autocrlf }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+
+- name: Configure global git core.filemode
+  command: git config --global core.filemode "{{ git_core_filemode }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+
+- name: Configure global git user.name when provided
+  command: git config --global user.name "{{ git_user_name }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+  when: git_user_name | default('') | length > 0
+
+- name: Configure global git user.email when provided
+  command: git config --global user.email "{{ git_user_email }}"
+  changed_when: false
+  become_user: "{{ bootstrap_target_user }}"
+  environment:
+    HOME: "{{ bootstrap_target_home }}"
+  when: git_user_email | default('') | length > 0
+
+- name: Manage minimal ~/.bashrc block
+  blockinfile:
+    path: "{{ bootstrap_target_home }}/.bashrc"
+    create: yes
+    owner: "{{ bootstrap_target_user }}"
+    group: "{{ bootstrap_target_user }}"
+    mode: '0644'
+    marker: "# {mark} ANSIBLE MANAGED WSL USER BOOTSTRAP"
+    block: |
+      export PATH="$HOME/.local/bin:$PATH"
+
+      alias ll='ls -alF'
+      alias la='ls -A'
+      alias gs='git status'
+      alias gb='git branch'
+      alias gc='git commit'
+      alias gp='git push'
+      alias k='kubectl'
+
+- name: Validate user bootstrap role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

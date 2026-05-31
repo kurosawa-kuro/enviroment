@@ -1,0 +1,25 @@
+---
+# AWS role dependencies
+dependencies:
+  - role: base
+
+galaxy_info:
+  role_name: aws
+  author: WSL Ubuntu Environment Setup
+  description: AWS CLI and cloud tools (Terraform, GitHub CLI)
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - aws
+    - cloud
+    - cli
+    - terraform
+    - github
+    - infrastructure
+    - devops

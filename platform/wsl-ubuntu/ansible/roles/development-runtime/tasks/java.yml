@@ -1,0 +1,33 @@
+---
+- name: Install Java {{ java_version }}
+  apt:
+    name: "openjdk-{{ java_version }}-jdk"
+    state: present
+    update_cache: yes
+
+- name: Install Maven {{ maven_version }}
+  unarchive:
+    src: "https://archive.apache.org/dist/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz"
+    dest: /opt
+    remote_src: yes
+  args:
+    creates: "/opt/apache-maven-{{ maven_version }}"
+
+- name: Install Gradle {{ gradle_version }}
+  unarchive:
+    src: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+    dest: /opt
+    remote_src: yes
+  args:
+    creates: "/opt/gradle-{{ gradle_version }}"
+
+- name: Create Java build tools profile script
+  copy:
+    content: |
+      # Java build tools PATH configuration
+      export JAVA_HOME=/usr/lib/jvm/java-{{ java_version }}-openjdk-amd64
+      export MAVEN_HOME=/opt/apache-maven-{{ maven_version }}
+      export GRADLE_HOME=/opt/gradle-{{ gradle_version }}
+      export PATH=/opt/apache-maven-{{ maven_version }}/bin:/opt/gradle-{{ gradle_version }}/bin:$PATH
+    dest: /etc/profile.d/java-build-tools.sh
+    mode: '0644'

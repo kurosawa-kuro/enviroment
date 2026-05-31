@@ -1,0 +1,44 @@
+---
+# Add Docker's official GPG key
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+# Add Docker repository
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+
+# Install Docker Engine
+- name: Install Docker {{ docker_version }}
+  apt:
+    name: "docker-ce{% if docker_version != 'system' %}={{ docker_version }}*{% endif %}"
+    state: present
+    update_cache: yes
+
+# Install Docker Compose
+- name: Install Docker Compose
+  apt:
+    name: docker-compose-plugin
+    state: present
+
+# Start and enable Docker service
+- name: Start and enable Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+# Add user to docker group
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user | default(ansible_env.USER) }}"
+    groups: docker
+    append: yes
+
+# Validate docker role installation
+- name: Validate docker role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

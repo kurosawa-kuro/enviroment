@@ -1,0 +1,40 @@
+---
+# Google Cloud CLI (gcloud) — メインクラウド
+# rapid channel の tarball を /opt に展開してシステムワイド導入する。
+# gcloud_version: "latest" のときは無版 URL、それ以外はバージョン指定 URL を使う。
+- name: Download Google Cloud CLI ({{ gcloud_version }})
+  get_url:
+    url: >-
+      {{ 'https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz'
+         if gcloud_version == 'latest'
+         else 'https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-' + gcloud_version + '-linux-x86_64.tar.gz' }}
+    dest: "{{ download_dir }}/google-cloud-cli.tar.gz"
+
+- name: Extract Google Cloud CLI
+  unarchive:
+    src: "{{ download_dir }}/google-cloud-cli.tar.gz"
+    dest: /opt
+    remote_src: yes
+    creates: /opt/google-cloud-sdk/install.sh
+
+- name: Install Google Cloud CLI (non-interactive)
+  command: >-
+    /opt/google-cloud-sdk/install.sh --quiet
+    --usage-reporting false
+    --path-update false
+    --command-completion false
+  args:
+    creates: /opt/google-cloud-sdk/bin/gcloud
+
+- name: Create gcloud PATH profile script
+  copy:
+    content: |
+      # Google Cloud CLI PATH configuration
+      export PATH=/opt/google-cloud-sdk/bin:$PATH
+    dest: /etc/profile.d/google-cloud-sdk.sh
+    mode: '0644'
+
+# Validate gcp role installation
+- name: Validate gcp role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

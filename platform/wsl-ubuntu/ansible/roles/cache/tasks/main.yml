@@ -1,0 +1,82 @@
+---
+# Local cache setup for performance optimization
+- name: Create cache directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
+  loop:
+    - "{{ download_dir }}"
+    - "{{ download_dir }}/cache"
+    - "{{ download_dir }}/cache/apt"
+    - "{{ download_dir }}/cache/downloads"
+    - "{{ download_dir }}/cache/builds"
+    - "{{ download_dir }}/cache/pip"
+    - "{{ download_dir }}/cache/npm"
+    - "{{ download_dir }}/cache/maven"
+    - "{{ download_dir }}/cache/gradle"
+
+# APT cache configuration
+- name: Configure APT cache directory
+  template:
+    src: apt-cache.conf.j2
+    dest: /etc/apt/apt.conf.d/01cache
+    mode: '0644'
+  become: yes
+
+# Download cache management script
+- name: Install cache management script
+  template:
+    src: cache_manager.sh.j2
+    dest: /usr/local/bin/cache_manager.sh
+    mode: '0755'
+  become: yes
+
+# Cache cleanup cron job
+- name: Setup cache cleanup cron job
+  cron:
+    name: "Ansible cache cleanup"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/cache_manager.sh cleanup"
+    user: root
+  become: yes
+
+# Environment variables for cache usage
+- name: Setup cache Environment variables
+  template:
+    src: cache-env.sh.j2
+    dest: /etc/profile.d/cache-env.sh
+    mode: '0644'
+  become: yes
+
+# Pre-download commonly used packages
+- name: Pre-download common packages to cache
+  apt:
+    name: "{{ item }}"
+    state: latest
+    download_only: yes
+    update_cache: yes
+  loop:
+    - curl
+    - wget
+    - git
+    - build-essential
+    - python3-pip
+  become: yes
+  when: preload_cache | default(true)
+
+# Cache statistics and monitoring
+- name: Create cache statistics script
+  template:
+    src: cache_stats.sh.j2
+    dest: /usr/local/bin/cache_stats.sh
+    mode: '0755'
+  become: yes
+
+# Validate cache setup
+- name: Validate cache setup
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

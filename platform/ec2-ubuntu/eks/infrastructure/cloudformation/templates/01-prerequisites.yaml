@@ -1,0 +1,261 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Prerequisites for EKS Cluster - ECR and S3 Bucket'
+
+# =============================================================================
+# Template Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Basic Configuration"
+        Parameters:
+          - Environment
+          - Project
+          - Owner
+      - Label:
+          default: "Resource Configuration"
+        Parameters:
+          - BucketPrefix
+          - ECRRepositoryName
+
+# =============================================================================
+# Input Parameters
+# =============================================================================
+Parameters:
+  # Resource Configuration
+  BucketPrefix:
+    Type: String
+    Default: eks-platform-bootstrap
+    Description: Prefix for S3 bucket name
+    MinLength: 1
+    MaxLength: 30
+    AllowedPattern: ^[a-z][a-z0-9-]*$
+
+  ECRRepositoryName:
+    Type: String
+    Default: eks-app
+    Description: Name of the ECR repository for container images
+    MinLength: 2
+    MaxLength: 256
+    AllowedPattern: ^[a-z][a-z0-9-_]*$
+
+  # Resource Tagging
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment name
+    AllowedValues: [development, staging, production, learning]
+
+  Version:
+    Type: String
+    Default: v2
+    Description: Version suffix for resource names
+
+  Project:
+    Type: String
+    Default: eks-platform
+    Description: Project name
+
+  Owner:
+    Type: String
+    Default: admin
+    Description: Owner of the resources
+
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+
+  # ============================================
+  # Container Registry - ECR Repository
+  # ============================================
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${Project}-${ECRRepositoryName}-${Version}'
+      ImageTagMutability: MUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 10 images",
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["v"],
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": {
+                  "type": "expire"
+                }
+              },
+              {
+                "rulePriority": 2,
+                "description": "Delete untagged images older than 1 day",
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 1
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${ECRRepositoryName}'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Purpose
+          Value: Container Registry
+
+  # ============================================
+  # S3 Bucket for Bootstrap Scripts
+  # ============================================
+  BootstrapBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${BucketPrefix}-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+          - Id: CleanupIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${BucketPrefix}'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Purpose
+          Value: EKS Bootstrap Scripts
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ============================================
+  # S3 Bucket Policy
+  # ============================================
+  BootstrapBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BootstrapBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt BootstrapBucket.Arn
+              - !Sub '${BootstrapBucket.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+          - Sid: AllowEC2Access
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+            Resource:
+              - !GetAtt BootstrapBucket.Arn
+              - !Sub '${BootstrapBucket.Arn}/*'
+
+
+  # ============================================
+  # SSM Parameters for sharing values
+  # ============================================
+  BucketNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/bootstrap-bucket-name'
+      Type: String
+      Value: !Ref BootstrapBucket
+      Description: S3 bucket name for bootstrap scripts
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+  BucketArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/bootstrap-bucket-arn'
+      Type: String
+      Value: !GetAtt BootstrapBucket.Arn
+      Description: S3 bucket ARN for bootstrap scripts
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+
+  # Container Registry
+  ECRRepositoryName:
+    Description: ECR repository name
+    Value: !Ref ECRRepository
+    Export:
+      Name: !Sub '${AWS::StackName}-ECRRepositoryName'
+
+  ECRRepositoryUri:
+    Description: ECR repository URI
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Project}-${ECRRepositoryName}-${Version}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ECRRepositoryUri'
+
+  # Storage Resources  
+  BucketName:
+    Description: Name of the S3 bucket for bootstrap scripts
+    Value: !Ref BootstrapBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+
+  BucketArn:
+    Description: ARN of the S3 bucket
+    Value: !GetAtt BootstrapBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'
+
+  BucketRegion:
+    Description: Region of the S3 bucket
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketRegion'
+
+  StackStatus:
+    Description: Stack creation status
+    Value: Prerequisites stack created successfully

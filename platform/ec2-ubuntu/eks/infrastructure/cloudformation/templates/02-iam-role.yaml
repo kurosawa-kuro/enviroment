@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM Roles and Policies for EKS Infrastructure'
+
+# =============================================================================
+# Template Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Stack Dependencies"
+        Parameters:
+          - PrerequisitesStackName
+      - Label:
+          default: "Resource Tagging"
+        Parameters:
+          - Environment
+          - Version
+          - Project
+          - Owner
+
+# =============================================================================
+# Input Parameters
+# =============================================================================
+Parameters:
+  # Stack Dependencies
+  PrerequisitesStackName:
+    Type: String
+    Default: eks-prerequisites
+    Description: Name of the prerequisites stack (01-prerequisites)
+    MinLength: 1
+    MaxLength: 128
+
+  # Resource Tagging
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment name
+    AllowedValues: [development, staging, production, learning]
+
+  Version:
+    Type: String
+    Default: v2
+    Description: Version suffix for resource names
+
+  Project:
+    Type: String
+    Default: eks-platform
+    Description: Project name
+
+  Owner:
+    Type: String
+    Default: admin
+    Description: Owner of the resources
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================
+  # IAM Role for EC2 to Access S3
+  # ============================================
+  EC2S3AccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Project}-ec2-s3-access-role-${Version}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !ImportValue
+                    Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+                  - !Sub
+                    - '${BucketArn}/*'
+                    - BucketArn: !ImportValue
+                        Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+
+  # ============================================
+  # Instance Profile for EC2
+  # ============================================
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${Project}-ec2-instance-profile-${Version}'
+      Roles:
+        - !Ref EC2S3AccessRole
+
+  # ============================================
+  # SSM Parameters for sharing values
+  # ============================================
+  EC2RoleArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/ec2-role-arn'
+      Type: String
+      Value: !GetAtt EC2S3AccessRole.Arn
+      Description: IAM role ARN for EC2 instances
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+  InstanceProfileArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/instance-profile-arn'
+      Type: String
+      Value: !GetAtt EC2InstanceProfile.Arn
+      Description: Instance profile ARN for EC2 instances
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  EC2RoleName:
+    Description: Name of the IAM role for EC2 instances
+    Value: !Ref EC2S3AccessRole
+    Export:
+      Name: !Sub '${AWS::StackName}-EC2RoleName'
+
+  EC2RoleArn:
+    Description: ARN of the IAM role for EC2 instances
+    Value: !GetAtt EC2S3AccessRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EC2RoleArn'
+
+  InstanceProfileName:
+    Description: Name of the instance profile for EC2 instances
+    Value: !Ref EC2InstanceProfile
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceProfileName'
+
+  InstanceProfileArn:
+    Description: ARN of the instance profile for EC2 instances
+    Value: !GetAtt EC2InstanceProfile.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceProfileArn'
+
+  StackStatus:
+    Description: Stack creation status
+    Value: IAM roles stack created successfully

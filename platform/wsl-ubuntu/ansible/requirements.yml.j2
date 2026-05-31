@@ -1,0 +1,19 @@
+---
+# Ansible Galaxy requirements template
+# Generate with: make generate-requirements
+# Only includes actually used collections
+
+# Collections (only actually used ones)
+collections:
+  - name: community.postgresql
+    version: "{{ community_postgresql_version }}"
+
+# Roles (if using external roles)
+roles: []
+  # Example external roles (uncomment as needed)
+  # - name: geerlingguy.docker
+  #   version: "6.1.0"
+  # - name: geerlingguy.nodejs
+  #   version: "6.1.0"
+  # - name: geerlingguy.postgresql
+  #   version: "3.4.0"

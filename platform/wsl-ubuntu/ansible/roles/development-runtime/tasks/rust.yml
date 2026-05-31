@@ -1,0 +1,22 @@
+---
+# Rust (rustup) — 非MLのメイン言語。/opt/rust にシステムワイド導入
+- name: Install Rust toolchain ({{ rust_version }}) via rustup
+  shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+      sh -s -- -y --no-modify-path --default-toolchain {{ rust_version }}
+  args:
+    creates: /opt/rust/bin/rustc
+    executable: /bin/bash
+  environment:
+    RUSTUP_HOME: /opt/rust
+    CARGO_HOME: /opt/rust
+
+- name: Create Rust PATH profile script
+  copy:
+    content: |
+      # Rust toolchain PATH configuration
+      export RUSTUP_HOME=/opt/rust
+      export CARGO_HOME=/opt/rust
+      export PATH=/opt/rust/bin:$PATH
+    dest: /etc/profile.d/rust.sh
+    mode: '0644'

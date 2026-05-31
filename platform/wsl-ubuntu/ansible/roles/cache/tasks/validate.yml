@@ -1,0 +1,62 @@
+---
+# Cache role validation
+- name: "Validate cache role installation"
+  block:
+    - name: "Check cache directories exist"
+      stat:
+        path: "{{ item }}"
+      register: cache_dirs
+      failed_when: not cache_dirs.stat.exists
+      loop:
+        - "{{ download_dir }}/cache"
+        - "{{ download_dir }}/cache/apt"
+        - "{{ download_dir }}/cache/downloads"
+        - "{{ download_dir }}/cache/builds"
+
+    - name: "Check cache management script"
+      stat:
+        path: /usr/local/bin/cache_manager.sh
+      register: cache_script
+      failed_when: not cache_script.stat.exists or not cache_script.stat.executable
+
+    - name: "Test cache manager functionality"
+      command: /usr/local/bin/cache_manager.sh stats
+      register: cache_stats
+      failed_when: cache_stats.rc != 0
+
+    - name: "Check APT cache configuration"
+      stat:
+        path: /etc/apt/apt.conf.d/01cache
+      register: apt_cache_config
+      failed_when: not apt_cache_config.stat.exists
+
+    - name: "Check cache Environment script"
+      stat:
+        path: /etc/profile.d/cache-env.sh
+      register: cache_env
+      failed_when: not cache_env.stat.exists
+
+    - name: "Test cache permissions"
+      file:
+        path: "{{ download_dir }}/cache/test_file"
+        state: touch
+        mode: '0644'
+      register: cache_permission_test
+
+    - name: "Clean up test file"
+      file:
+        path: "{{ download_dir }}/cache/test_file"
+        state: absent
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for cache role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['cache'] }}"
+
+- name: "Cache role validation completed successfully"
+  debug:
+    msg: "Cache system setup and validated successfully"

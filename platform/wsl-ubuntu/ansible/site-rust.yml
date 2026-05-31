@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  tasks:
+    - name: Install base system tools for Rust setup
+      import_role:
+        name: base
+
+    - name: Install Rust only
+      import_role:
+        name: development-runtime
+        tasks_from: rust

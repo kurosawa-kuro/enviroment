@@ -1,0 +1,56 @@
+---
+# Install AWS CLI v2
+- name: Download AWS CLI {{ awscli_version }}
+  get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ awscli_version }}.zip"
+    dest: "{{ download_dir }}/awscliv2.zip"
+
+- name: Extract AWS CLI
+  unarchive:
+    src: "{{ download_dir }}/awscliv2.zip"
+    dest: "{{ download_dir }}"
+    remote_src: yes
+    creates: "{{ download_dir }}/aws/install"
+
+- name: Install AWS CLI
+  command: "{{ download_dir }}/aws/install"
+  args:
+    creates: /usr/local/bin/aws
+
+# Install Terraform
+- name: Download Terraform {{ terraform_version }}
+  get_url:
+    url: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+    dest: "{{ download_dir }}/terraform.zip"
+
+- name: Extract Terraform
+  unarchive:
+    src: "{{ download_dir }}/terraform.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/terraform
+
+# Install GitHub CLI
+- name: Download GitHub CLI {{ ghcli_version }}
+  get_url:
+    url: "https://github.com/cli/cli/releases/download/v{{ ghcli_version }}/gh_{{ ghcli_version }}_linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/gh.tar.gz"
+
+- name: Extract GitHub CLI
+  unarchive:
+    src: "{{ download_dir }}/gh.tar.gz"
+    dest: "{{ download_dir }}"
+    remote_src: yes
+    creates: "{{ download_dir }}/gh_{{ ghcli_version }}_linux_amd64/bin/gh"
+
+- name: Install GitHub CLI binary
+  copy:
+    src: "{{ download_dir }}/gh_{{ ghcli_version }}_linux_amd64/bin/gh"
+    dest: /usr/local/bin/gh
+    mode: '0755'
+    remote_src: yes
+
+# Validate aws role installation
+- name: Validate aws role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

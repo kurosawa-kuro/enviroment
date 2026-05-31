@@ -1,0 +1,93 @@
+---
+- name: Add PostgreSQL GPG key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    state: present
+
+- name: Install PostgreSQL {{ postgres_version }}
+  apt:
+    name: "postgresql-{{ postgres_version }}"
+    state: present
+    update_cache: yes
+
+- name: Install PostgreSQL contrib packages
+  apt:
+    name: "postgresql-contrib-{{ postgres_version }}"
+    state: present
+
+- name: Install PostGIS for PostgreSQL {{ postgres_version }}
+  apt:
+    name: "postgresql-{{ postgres_version }}-postgis-3"
+    state: present
+
+- name: Start and enable PostgreSQL
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Set PostgreSQL port
+  lineinfile:
+    path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+    regexp: '^#?port = '
+    line: "port = {{ postgres_port }}"
+  notify: restart postgresql
+
+- name: Configure PostgreSQL authentication
+  lineinfile:
+    path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+    regexp: '^local\s+all\s+postgres\s+'
+    line: "local   all             postgres                                md5"
+  notify: restart postgresql
+
+- name: Set postgres user password
+  shell: |
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{{ postgres_password }}';"
+  args:
+    executable: /bin/bash
+
+- name: Ensure dev DB exists
+  shell: |
+    sudo -u postgres createdb {{ postgres_db_local }} || true
+  args:
+    executable: /bin/bash
+
+- name: Ensure test DB exists  
+  shell: |
+    sudo -u postgres createdb {{ postgres_db_test }} || true
+  args:
+    executable: /bin/bash
+
+- name: Enable extensions
+  shell: |
+    case "{{ item }}" in
+      "uuid-ossp")
+        sudo -u postgres psql -d {{ postgres_db_local }} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+        ;;
+      *)
+        sudo -u postgres psql -d {{ postgres_db_local }} -c "CREATE EXTENSION IF NOT EXISTS {{ item }};"
+        ;;
+    esac
+  args:
+    executable: /bin/bash
+  loop: "{{ postgres_extensions.split(',') }}"
+
+# Neon CLI (neonctl) — サーバーレス PostgreSQL。npm global で導入
+# Node.js は development-runtime ロール (site.yml 上 postgresql より前) で導入済み
+- name: Install Neon CLI (neonctl) via npm
+  shell: |
+    command -v neonctl >/dev/null 2>&1 || npm install -g neonctl@{{ neonctl_version }}
+  args:
+    executable: /bin/bash
+  register: neonctl_install
+  changed_when: "'neonctl' in neonctl_install.stdout"
+
+# Validate postgresql role installation
+- name: Validate postgresql role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

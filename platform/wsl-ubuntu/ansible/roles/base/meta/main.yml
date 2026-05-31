@@ -1,0 +1,23 @@
+---
+# Base role dependencies - foundation role with no dependencies
+dependencies: []
+
+galaxy_info:
+  role_name: base
+  author: WSL Ubuntu Environment Setup
+  description: Base system packages and repositories setup
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - base
+    - system
+    - packages
+    - repositories
+    - ubuntu
+    - wsl

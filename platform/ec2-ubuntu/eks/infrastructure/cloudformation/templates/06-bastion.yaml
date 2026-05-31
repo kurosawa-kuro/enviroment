@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EKS Bastion Host - Management and Access Server'
+
+# =============================================================================
+# Template Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Stack Dependencies"
+        Parameters:
+          - PrerequisitesStackName
+          - NetworkStackName
+          - EKSClusterStackName
+      - Label:
+          default: "Bastion Host Configuration"
+        Parameters:
+          - BastionInstanceType
+          - LatestUbuntuAmi
+      - Label:
+          default: "Resource Tagging"
+        Parameters:
+          - Environment
+          - Version
+          - Project
+          - Owner
+
+# =============================================================================
+# Input Parameters
+# =============================================================================
+Parameters:
+  # Stack Dependencies
+  PrerequisitesStackName:
+    Type: String
+    Default: eks-prerequisites
+    Description: Name of the prerequisites stack (01-prerequisites)
+    MinLength: 1
+    MaxLength: 128
+
+  NetworkStackName:
+    Type: String
+    Default: eks-network
+    Description: Name of the network stack (02-network)
+    MinLength: 1
+    MaxLength: 128
+
+  EKSClusterStackName:
+    Type: String
+    Default: eks-platform
+    Description: Name of the EKS platform stack (04-eks)
+    MinLength: 1
+    MaxLength: 128
+
+  # Bastion Host Configuration
+  BastionInstanceType:
+    Type: String
+    Default: t3.micro
+    Description: EC2 instance type for bastion host
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+
+  LatestUbuntuAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+    Description: Latest Ubuntu 24.04 LTS AMI
+
+  # Resource Tagging
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment name
+    AllowedValues: [development, staging, production, learning]
+
+  # Version Parameter
+  Version:
+    Type: String
+    Default: v2
+    Description: Version suffix for resource names
+
+  Project:
+    Type: String
+    Default: eks-platform
+    Description: Project name
+
+  Owner:
+    Type: String
+    Default: admin
+    Description: Owner of the resources
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================
+  # IAM Role for Bastion Host
+  # ============================================
+  BastionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Project}-bastion-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: EKSAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'eks:DescribeCluster'
+                  - 'eks:ListClusters'
+                  - 'eks:DescribeNodegroup'
+                  - 'eks:ListNodegroups'
+                  - 'eks:ListUpdates'
+                  - 'eks:DescribeUpdate'
+                  - 'eks:AccessKubernetesApi'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:GetParametersByPath'
+                Resource: 
+                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/eks/${Project}-${Version}/*'
+                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/eks/${Project}/*'
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !Sub
+                    - '${BucketArn}'
+                    - BucketArn: !ImportValue
+                        Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+                  - !Sub
+                    - '${BucketArn}/*'
+                    - BucketArn: !ImportValue
+                        Fn::Sub: '${PrerequisitesStackName}-BucketArn'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+
+  BastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${Project}-bastion-profile'
+      Roles:
+        - !Ref BastionRole
+
+  # ============================================
+  # Bastion Host Launch Template and Instance
+  # ============================================
+  BastionLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub '${Project}-bastion-lt'
+      LaunchTemplateData:
+        ImageId: !Ref LatestUbuntuAmi
+        InstanceType: !Ref BastionInstanceType
+        IamInstanceProfile:
+          Arn: !GetAtt BastionInstanceProfile.Arn
+        SecurityGroupIds:
+          - !ImportValue
+            Fn::Sub: '${NetworkStackName}-BastionSecurityGroupId'
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              DeleteOnTermination: true
+              Encrypted: false
+              VolumeSize: 20
+              VolumeType: gp3
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: !Sub '${Project}-bastion'
+              - Key: Environment
+                Value: !Ref Environment
+              - Key: Project
+                Value: !Ref Project
+              - Key: Owner
+                Value: !Ref Owner
+              - Key: ManagedBy
+                Value: CloudFormation
+              - Key: Purpose
+                Value: EKS Bastion Host
+          - ResourceType: volume
+            Tags:
+              - Key: Name
+                Value: !Sub '${Project}-bastion-volume'
+              - Key: Environment
+                Value: !Ref Environment
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -e
+            
+            # Variables from CloudFormation
+            export AwsRegion="${AWS::Region}"
+            export ProjectName="${Project}"
+            export STACK_NAME="${AWS::StackName}"
+            
+            # Get cluster name from EKS stack (with error handling)
+            export CLUSTER_NAME=$(aws ssm get-parameter --name "/eks/${Project}-${Version}/cluster-name" --region ${AWS::Region} --query 'Parameter.Value' --output text 2>/dev/null || echo "${Project}")
+            
+            # Get S3 bucket name from SSM Parameter (with error handling)
+            export S3_BUCKET=$(aws ssm get-parameter --name "/eks/${Project}-${Version}/bootstrap-bucket-name" --region ${AWS::Region} --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+            
+            # Logging
+            LOG_FILE="/var/log/user-data.log"
+            exec > >(tee -a ${!LOG_FILE})
+            exec 2>&1
+            
+            echo "Starting bastion setup at $(date)"
+            echo "S3 Bucket: ${!S3_BUCKET}"
+            echo "Region: ${!AwsRegion}"
+            echo "Cluster: ${!CLUSTER_NAME}"
+            
+            # Update system
+            apt-get update
+            apt-get upgrade -y
+            
+            # Install AWS CLI v2
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install
+            rm -rf aws awscliv2.zip
+            
+            # Create script directory
+            SCRIPT_DIR="/opt/bootstrap"
+            mkdir -p ${!SCRIPT_DIR}
+            cd ${!SCRIPT_DIR}
+            
+            # Download and execute main setup script (with error handling)
+            if [ ! -z "${!S3_BUCKET}" ]; then
+              echo "Downloading user-data script from S3..."
+              if aws s3 cp s3://${!S3_BUCKET}/scripts/user-data.sh ./user-data.sh --region ${!AwsRegion}; then
+                chmod +x ./user-data.sh
+                echo "Executing user-data setup script..."
+                ./user-data.sh
+              else
+                echo "Warning: Could not download user-data script from S3. Skipping..."
+              fi
+            else
+              echo "Warning: S3 bucket not found. Skipping user-data script download..."
+            fi
+            
+            echo "Bastion setup completed at $(date)"
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref BastionLaunchTemplate
+        Version: !GetAtt BastionLaunchTemplate.LatestVersionNumber
+      # セキュリティ強化: Bastionホストをプライベートサブネットに配置
+      SubnetId: !ImportValue
+        Fn::Sub: '${NetworkStackName}-PrivateSubnet1Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-bastion'
+        - Key: SessionName
+          Value: BastionHost
+
+  # ============================================
+  # SSM Parameters for sharing values
+  # ============================================
+  BastionInstanceIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/eks/${Project}-${Version}/bastion-instance-id'
+      Type: String
+      Value: !Ref BastionInstance
+      Description: Bastion instance ID
+      Tags:
+        Environment: !Ref Environment
+        Project: !Ref Project
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  BastionInstanceId:
+    Description: Bastion Instance ID
+    Value: !Ref BastionInstance
+    Export:
+      Name: !Sub '${AWS::StackName}-BastionInstanceId'
+
+  BastionConnectCommand:
+    Description: Command to connect to bastion host
+    Value: !Sub |
+      aws ssm start-session --target ${BastionInstance} --region ${AWS::Region}
+
+  BastionRole:
+    Description: Bastion IAM Role ARN
+    Value: !GetAtt BastionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BastionRoleArn'

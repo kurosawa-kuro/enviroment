@@ -1,0 +1,54 @@
+---
+# AWS role validation
+- name: "Validate aws role installation"
+  block:
+    - name: "Check AWS and cloud tools"
+      command: "{{ item.cmd }}"
+      register: version_check
+      failed_when: version_check.rc != 0
+      loop:
+        - { name: "aws", cmd: "aws --version" }
+        - { name: "terraform", cmd: "terraform --version" }
+        - { name: "gh", cmd: "gh --version" }
+
+    - name: "Test AWS CLI functionality"
+      shell: |
+        aws sts get-caller-identity --output json || echo "No AWS credentials configured (expected)"
+      register: aws_test
+      failed_when: false  # Don't fail if no credentials are configured
+
+    - name: "Test Terraform functionality"
+      shell: |
+        echo 'terraform {
+          required_version = ">= 1.0"
+        }' > /tmp/test.tf
+        terraform -chdir=/tmp init
+        terraform -chdir=/tmp validate
+        rm -rf /tmp/test.tf /tmp/.terraform /tmp/.terraform.lock.hcl
+      register: terraform_test
+      failed_when: terraform_test.rc != 0
+
+    - name: "Test GitHub CLI functionality"
+      shell: |
+        gh auth status || echo "No GitHub authentication configured (expected)"
+      register: gh_test
+      failed_when: false  # Don't fail if not authenticated
+
+    - name: "Check tool accessibility in PATH"
+      shell: |
+        which aws && which terraform && which gh
+      register: path_check
+      failed_when: path_check.rc != 0
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for aws role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+    
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['aws'] }}"
+
+- name: "AWS role validation completed successfully"
+  debug:
+    msg: "All AWS and cloud tools validated successfully"

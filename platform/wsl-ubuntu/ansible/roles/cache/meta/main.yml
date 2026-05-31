@@ -1,0 +1,22 @@
+---
+# Cache role dependencies
+dependencies: []
+
+galaxy_info:
+  role_name: cache
+  author: WSL Ubuntu Environment Setup
+  description: Local caching system for downloads and packages
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - cache
+    - performance
+    - optimization
+    - downloads
+    - packages

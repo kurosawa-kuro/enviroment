@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  tasks:
+    - name: Apply base WSL Ubuntu setup
+      import_role:
+        name: base

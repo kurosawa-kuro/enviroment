@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  tasks:
+    - name: Apply opt-in user bootstrap
+      import_role:
+        name: user-bootstrap

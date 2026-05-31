@@ -1,0 +1,16 @@
+---
+- name: Install Kotlin {{ kotlin_version }}
+  unarchive:
+    src: "https://github.com/JetBrains/kotlin/releases/download/v{{ kotlin_version }}/kotlin-compiler-{{ kotlin_version }}.zip"
+    dest: /opt
+    remote_src: yes
+  args:
+    creates: /opt/kotlinc
+
+- name: Create Kotlin profile script
+  copy:
+    content: |
+      # Kotlin PATH configuration
+      export PATH=/opt/kotlinc/bin:$PATH
+    dest: /etc/profile.d/kotlin.sh
+    mode: '0644'

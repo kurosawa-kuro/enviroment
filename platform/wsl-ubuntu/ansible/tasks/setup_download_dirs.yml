@@ -1,0 +1,24 @@
+---
+- name: Create download directory
+  file:
+    path: "{{ download_dir }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user | default(ansible_env.USER) }}"
+    group: "{{ ansible_user | default(ansible_env.USER) }}"
+
+- name: Create local temp directory
+  file:
+    path: "{{ local_tmp }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user | default(ansible_env.USER) }}"
+    group: "{{ ansible_user | default(ansible_env.USER) }}"
+
+- name: Create remote temp directory
+  file:
+    path: "{{ remote_tmp }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user | default(ansible_env.USER) }}"
+    group: "{{ ansible_user | default(ansible_env.USER) }}"

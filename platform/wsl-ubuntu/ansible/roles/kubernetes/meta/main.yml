@@ -1,0 +1,28 @@
+---
+# Kubernetes role dependencies
+dependencies:
+  - role: base
+  - role: docker
+
+galaxy_info:
+  role_name: kubernetes
+  author: WSL Ubuntu Environment Setup
+  description: Kubernetes tools (kubectl, kind, helm, kustomize, minikube, security tools)
+  min_ansible_version: "2.14"
+  
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy  # 22.04 LTS
+        - focal  # 20.04 LTS
+  
+  galaxy_tags:
+    - kubernetes
+    - k8s
+    - kubectl
+    - helm
+    - kind
+    - minikube
+    - kustomize
+    - orchestration
+    - security

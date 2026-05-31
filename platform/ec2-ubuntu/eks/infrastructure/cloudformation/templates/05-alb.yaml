@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Application Load Balancer for EKS Cluster'
+
+# =============================================================================
+# Template Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Stack Dependencies"
+        Parameters:
+          - NetworkStackName
+      - Label:
+          default: "Resource Tagging"
+        Parameters:
+          - Environment
+          - Version
+          - Project
+          - Owner
+
+# =============================================================================
+# Input Parameters
+# =============================================================================
+Parameters:
+  # Stack Dependencies
+  NetworkStackName:
+    Type: String
+    Default: eks-network
+    Description: Name of the network stack (02-network)
+    MinLength: 1
+    MaxLength: 128
+
+  EKSClusterStackName:
+    Type: String
+    Default: eks-platform
+    Description: Name of the EKS platform stack (04-eks)
+    MinLength: 1
+    MaxLength: 128
+
+  # Resource Tagging
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment name
+    AllowedValues: [development, staging, production, learning]
+
+  Version:
+    Type: String
+    Default: v2
+    Description: Version suffix for resource names
+
+  Project:
+    Type: String
+    Default: eks-platform
+    Description: Project name
+
+  Owner:
+    Type: String
+    Default: admin
+    Description: Owner of the resources
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================
+  # Security Group for ALB
+  # ============================================
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${Project}-alb-sg-${Version}'
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: !ImportValue
+        Fn::Sub: '${NetworkStackName}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP traffic from anywhere
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTPS traffic from anywhere
+      SecurityGroupEgress:
+        # セキュリティ強化: NodePort範囲のみVPC CIDR宛て許可
+        - IpProtocol: tcp
+          FromPort: 30000
+          ToPort: 32767
+          CidrIp: 10.0.0.0/16
+          Description: Allow traffic to EKS NodePort services
+        # 標準Webポート（直接Pod通信用）
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/16
+          Description: Allow traffic to EKS pods on port 80
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 10.0.0.0/16
+          Description: Allow traffic to EKS pods on port 8080
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-alb-sg-${Version}'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+
+  # ============================================
+  # Application Load Balancer
+  # ============================================
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${Project}-alb-${Version}'
+      Type: application
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !ImportValue
+          Fn::Sub: '${NetworkStackName}-PublicSubnet1Id'
+        - !ImportValue
+          Fn::Sub: '${NetworkStackName}-PublicSubnet2Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-alb-${Version}'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+
+  # ============================================
+  # Target Group for EKS NodePort Service
+  # ============================================
+  EKSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${Project}-tg-${Version}'
+      Port: 30080
+      Protocol: HTTP
+      ProtocolVersion: HTTP1
+      TargetType: instance
+      VpcId: !ImportValue
+        Fn::Sub: '${NetworkStackName}-VpcId'
+      HealthCheckEnabled: true
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 30080
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200,404
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-tg-${Version}'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref Project
+        - Key: Owner
+          Value: !Ref Owner
+
+  # ============================================
+  # ALB Listener (HTTP)
+  # ============================================
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref EKSTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # ============================================
+  # Security Group Rules for ALB to EKS Worker Nodes
+  # ============================================
+  ALBToNodePortIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue
+        Fn::Sub: '${EKSClusterStackName}-NodeGroupSecurityGroupId'
+      IpProtocol: tcp
+      FromPort: 30000
+      ToPort: 32767
+      SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Description: ALB to NodePort services
+
+  ALBToPort80Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue
+        Fn::Sub: '${EKSClusterStackName}-NodeGroupSecurityGroupId'
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Description: ALB to pods on port 80
+
+  ALBToPort8080Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue
+        Fn::Sub: '${EKSClusterStackName}-NodeGroupSecurityGroupId'
+      IpProtocol: tcp
+      FromPort: 8080
+      ToPort: 8080
+      SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Description: ALB to pods on port 8080
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  ALBSecurityGroupId:
+    Description: Security Group ID for ALB
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBSecurityGroupId'
+
+  ApplicationLoadBalancerArn:
+    Description: Application Load Balancer ARN
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBArn'
+
+  ApplicationLoadBalancerDNS:
+    Description: Application Load Balancer DNS Name
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBDNSName'
+
+  ApplicationLoadBalancerHostedZone:
+    Description: Application Load Balancer Hosted Zone ID
+    Value: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBHostedZoneId'
+
+  EKSTargetGroupArn:
+    Description: Target Group ARN for EKS services
+    Value: !Ref EKSTargetGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-EKSTargetGroupArn'
+
+  ALBListenerArn:
+    Description: ALB Listener ARN
+    Value: !Ref ALBListener
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBListenerArn'
+
+  LoadBalancerURL:
+    Description: Public URL of the Application Load Balancer
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
+
+  StackStatus:
+    Description: Stack creation status
+    Value: ALB stack created successfully

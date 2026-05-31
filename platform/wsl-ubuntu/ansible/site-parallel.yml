@@ -1,0 +1,187 @@
+---
+# Parallel execution playbook for optimized performance
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/parallel_execution.yml
+  
+  vars:
+    # Track timing and performance
+    start_time: "{{ ansible_date_time.epoch }}"
+    failed_roles: []
+    completed_roles: []
+    
+  tasks:
+    # Phase 1: Base foundation (must run first)
+    - name: "Phase 1: Install base system (foundation)"
+      block:
+        - name: Record phase 1 start time
+          set_fact:
+            phase1_start: "{{ ansible_date_time.epoch }}"
+        
+        - name: Execute base role
+          include_role:
+            name: base
+          register: base_result
+        
+        - name: Record base role completion
+          set_fact:
+            completed_roles: "{{ completed_roles + ['base'] }}"
+            phase1_end: "{{ ansible_date_time.epoch }}"
+      
+      rescue:
+        - name: Handle base role failure
+          set_fact:
+            failed_roles: "{{ failed_roles + ['base'] }}"
+        - name: Fail if base role fails
+          fail:
+            msg: "Base role failed - cannot continue with other roles"
+
+    # Phase 2: Independent roles (parallel execution)
+    - name: "Phase 2: Install independent tools in parallel"
+      block:
+        - name: Record phase 2 start time
+          set_fact:
+            phase2_start: "{{ ansible_date_time.epoch }}"
+        
+        - name: Execute independent roles in parallel
+          include_role:
+            name: "{{ item }}"
+          async: "{{ parallel_groups.independent_tools.timeout }}"
+          poll: 0
+          loop: "{{ parallel_groups.independent_tools.roles }}"
+          register: parallel_jobs_phase2
+        
+        - name: Wait for parallel jobs completion (Phase 2)
+          async_status:
+            jid: "{{ item.ansible_job_id }}"
+          loop: "{{ parallel_jobs_phase2.results }}"
+          register: job_results_phase2
+          until: job_results_phase2.finished
+          retries: 120  # 30 minutes with 15s intervals
+          delay: 15
+          when: item.ansible_job_id is defined
+        
+        - name: Record phase 2 completion
+          set_fact:
+            completed_roles: "{{ completed_roles + parallel_groups.independent_tools.roles }}"
+            phase2_end: "{{ ansible_date_time.epoch }}"
+        
+        - name: Check for phase 2 failures
+          set_fact:
+            failed_roles: "{{ failed_roles + [item.item] }}"
+          loop: "{{ job_results_phase2.results }}"
+          when: 
+            - item.failed is defined 
+            - item.failed
+      
+      rescue:
+        - name: Handle phase 2 failures
+          debug:
+            msg: "Some roles in phase 2 failed, but continuing with dependent roles"
+
+    # Phase 3: Docker (prerequisite for kubernetes)
+    - name: "Phase 3: Install Docker"
+      block:
+        - name: Record phase 3 start time
+          set_fact:
+            phase3_start: "{{ ansible_date_time.epoch }}"
+        
+        - name: Execute docker role
+          include_role:
+            name: docker
+          register: docker_result
+        
+        - name: Record docker role completion
+          set_fact:
+            completed_roles: "{{ completed_roles + ['docker'] }}"
+            phase3_end: "{{ ansible_date_time.epoch }}"
+      
+      rescue:
+        - name: Handle docker role failure
+          set_fact:
+            failed_roles: "{{ failed_roles + ['docker'] }}"
+        - name: Skip kubernetes if docker fails
+          debug:
+            msg: "Docker failed - kubernetes installation will be skipped"
+
+    # Phase 4: Kubernetes (depends on docker)
+    - name: "Phase 4: Install Kubernetes tools"
+      block:
+        - name: Record phase 4 start time
+          set_fact:
+            phase4_start: "{{ ansible_date_time.epoch }}"
+        
+        - name: Execute kubernetes role
+          include_role:
+            name: kubernetes
+          register: kubernetes_result
+          when: "'docker' in completed_roles"
+        
+        - name: Record kubernetes role completion
+          set_fact:
+            completed_roles: "{{ completed_roles + ['kubernetes'] }}"
+            phase4_end: "{{ ansible_date_time.epoch }}"
+          when: "'docker' in completed_roles"
+      
+      rescue:
+        - name: Handle kubernetes role failure
+          set_fact:
+            failed_roles: "{{ failed_roles + ['kubernetes'] }}"
+      
+      when: "'docker' in completed_roles"
+
+    # Performance summary and reporting
+    - name: "Generate performance report"
+      block:
+        - name: Calculate execution times
+          set_fact:
+            total_time: "{{ ansible_date_time.epoch | int - start_time | int }}"
+            phase1_time: "{{ phase1_end | int - phase1_start | int }}"
+            phase2_time: "{{ phase2_end | int - phase2_start | int }}"
+            phase3_time: "{{ phase3_end | int - phase3_start | int }}"
+            phase4_time: "{{ phase4_end | int - phase4_start | int }}"
+        
+        - name: Display performance summary
+          debug:
+            msg: |
+              =================================
+              PARALLEL EXECUTION PERFORMANCE REPORT
+              =================================
+              Total execution time: {{ total_time }} seconds ({{ (total_time | int / 60) | round(1) }} minutes)
+              
+              Phase 1 (Base): {{ phase1_time }} seconds
+              Phase 2 (Parallel): {{ phase2_time }} seconds 
+              Phase 3 (Docker): {{ phase3_time }} seconds
+              Phase 4 (Kubernetes): {{ phase4_time }} seconds
+              
+              Completed roles: {{ completed_roles | join(', ') }}
+              Failed roles: {{ failed_roles | join(', ') | default('None') }}
+              
+              Success rate: {{ ((completed_roles | length) / 6 * 100) | round(1) }}%
+              =================================
+        
+        - name: Save performance report
+          copy:
+            content: |
+              # Parallel Execution Performance Report
+              Date: {{ ansible_date_time.iso8601 }}
+              Total Time: {{ total_time }} seconds
+              Phase 1 Time: {{ phase1_time }} seconds
+              Phase 2 Time: {{ phase2_time }} seconds  
+              Phase 3 Time: {{ phase3_time }} seconds
+              Phase 4 Time: {{ phase4_time }} seconds
+              Completed Roles: {{ completed_roles | join(', ') }}
+              Failed Roles: {{ failed_roles | join(', ') | default('None') }}
+              Success Rate: {{ ((completed_roles | length) / 6 * 100) | round(1) }}%
+            dest: "{{ log_path | dirname }}/parallel_execution_report.txt"
+            mode: '0644'
+      
+      always:
+        - name: Cleanup temporary files
+          file:
+            path: "{{ download_dir }}"
+            state: absent
+          when: cleanup_after_install | default(false)
