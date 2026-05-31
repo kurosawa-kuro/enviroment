@@ -67,13 +67,13 @@ sudo apt install -y \
 ```bash
 mkdir -p ~/repos
 cd ~/repos
-git clone <YOUR_REPOSITORY_URL> enviroment
+git clone <YOUR_REPOSITORY_URL> private-kit
 ```
 
 ## 3. その後の最短導線
 
 ```bash
-cd /home/ubuntu/repos/enviroment/platform/wsl-ubuntu
+cd /home/ubuntu/repos/private-kit/enviroment/platform/wsl-ubuntu
 make setup-ansible
 make test-base
 make setup-base

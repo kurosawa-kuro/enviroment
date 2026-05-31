@@ -119,7 +119,7 @@ ansible-playbook site.yml \
 | `LOG_FILE` | `/home/ubuntu/setup-output.log` | ログファイルパス |
 | `USER_NAME` | `ubuntu` | 対象ユーザー名 |
 | `DEV_DIR` | `/home/ubuntu/dev` | 開発ディレクトリ |
-| `ANSIBLE_DIR` | `/home/ubuntu/dev/enviroment/platform/wsl-ubuntu/ansible` | Ansible ディレクトリ |
+| `ANSIBLE_DIR` | `/home/ubuntu/dev/private-kit/enviroment/platform/wsl-ubuntu/ansible` | Ansible ディレクトリ |
 
 ### 認証情報
 

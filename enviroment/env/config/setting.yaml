@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------------
 # WSL / Ubuntu
 # -----------------------------------------------------------------------------
-workspace_root: /home/ubuntu/repos/enviroment
+workspace_root: /home/ubuntu/repos/private-kit/enviroment
 wsl_distribution: Ubuntu
 timezone: Asia/Tokyo
 locale: ja_JP.UTF-8

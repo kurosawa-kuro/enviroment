@@ -5,7 +5,7 @@ set -euo pipefail
 readonly LOG_FILE="/home/ubuntu/setup-output.log"
 readonly USER_NAME="ubuntu"
 readonly DEV_DIR="/home/${USER_NAME}/dev"
-readonly ANSIBLE_DIR="/home/${USER_NAME}/dev/enviroment/platform/wsl-ubuntu/ansible"
+readonly ANSIBLE_DIR="/home/${USER_NAME}/dev/private-kit/enviroment/platform/wsl-ubuntu/ansible"
 
 # Discord Webhook URL
 readonly DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
@@ -176,7 +176,7 @@ setup_git() {
     # リポジトリクローン
     sudo -u "$USER_NAME" mkdir -p "$DEV_DIR"
     cd "$DEV_DIR" || handle_error "開発ディレクトリの作成に失敗しました"
-    sudo -u "$USER_NAME" git clone git@github.com:YOUR_GITHUB_ACCOUNT/enviroment.git >> "$LOG_FILE" 2>&1 || handle_error "リポジトリのクローンに失敗しました"
+    sudo -u "$USER_NAME" git clone git@github.com:YOUR_GITHUB_ACCOUNT/private-kit.git >> "$LOG_FILE" 2>&1 || handle_error "リポジトリのクローンに失敗しました"
 
     log "✅ Git設定が完了しました"
 }

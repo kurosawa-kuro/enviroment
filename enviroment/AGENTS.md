@@ -1,6 +1,6 @@
 # AGENTS.md
 
-このファイルは、AI コーディングアシスタントが `/home/ubuntu/repos/enviroment` で作業するときの共通ガイドです。詳細な背景説明は [`CLAUDE.md`](./CLAUDE.md) を参照しつつ、日常的な作業判断は本ファイルを優先してください。
+このファイルは、AI コーディングアシスタントが `/home/ubuntu/repos/private-kit/enviroment` で作業するときの共通ガイドです。詳細な背景説明は [`CLAUDE.md`](./CLAUDE.md) を参照しつつ、日常的な作業判断は本ファイルを優先してください。
 
 ## 1. リポジトリ概要
 

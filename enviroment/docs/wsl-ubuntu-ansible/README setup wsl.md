@@ -12,7 +12,7 @@
 すべて `platform/wsl-ubuntu/` 直下で実行します。
 
 ```bash
-cd /home/ubuntu/repos/enviroment/platform/wsl-ubuntu
+cd /home/ubuntu/repos/private-kit/enviroment/platform/wsl-ubuntu
 
 make setup-ansible
 make test-base

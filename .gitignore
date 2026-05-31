@@ -1,133 +1,104 @@
-# Node.js
-node_modules/
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local AI/tool settings
+.claude/settings.local.json
+
+# Monorepo layout
+# `enviroment/` is tracked in this repository.
+# `starter/` is kept alongside it but is not tracked here.
+/starter/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+!.env.*.sample
+!.env.*.template
+/env/secret.yaml
+/env/secret.*.yaml
+!/env/secret.example.yaml
+!/env/secret.sample.yaml
+!/env/secret.template.yaml
+
+# Logs
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm
-.yarn
-.pnp.*
-*.tsbuildinfo
+pnpm-debug.log*
+
+# Dependencies
+node_modules/
+vendor/
+
+# JavaScript / TypeScript build outputs
 dist/
 build/
-coverage/
 .next/
 .nuxt/
-.env
-!.env.example
-
-# Go
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-go.work
-/vendor/
-/dist/
-/bin/
-
-# CDK
-cdk.out/
-cdk.context.json
-*.cdk.staging
-*.js.map
-*.d.ts
-
-# Terraform
-**/.terraform/*
-*.tfstate
-*.tfstate.*
-*.tfvars
-*.tfvars.json
-crash.log
-crash.*.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
-.terraform.lock.hcl
-
-# AWS
-.aws/
-aws.json
-credentials
-config
-!env/config/
-!env/config/setting.yaml
-*.pem
-*.ppk
-
-# Claude Code (local 個人設定のみ無視。commands/ hooks/ は commit する)
-.claude/settings.local.json
-
-# IDE / Editors
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# OS generated
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs and databases
-*.log
-*.sql
-*.sqlite
-logs/
-*.log.*
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Testing
+.svelte-kit/
+out/
 coverage/
 .nyc_output/
-junit.xml
+playwright-report/
+test-results/
 
-# Dependency directories
-jspm_packages/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+artifacts/
 
-# Optional caches
-.eslintcache
-.stylelintcache
+# Rust
+target/
 
-# Build output
-dist/
-build/
-out/
-.next/
-.nuxt/
-.cache/
-.parcel-cache/
+# Go
+bin/
+*.test
+coverage.out
 
-# Temporary files
-tmp/
-temp/
-.tmp/
-*.tmp
-*.temppgdata/
+# Java / Kotlin
+.gradle/
+*.class
 
-# Local env / secrets
-env/secret/*
-!env/secret/.gitkeep
-!env/secret/*.template
-config/secrets/*.env
-config/secrets/ssh-keys/*
-config/secrets/aws-credentials/*
-!config/secrets/**/.gitkeep
-!config/secrets/**/*.template
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfplan
+
+# Databases and runtime data
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+uploads/
+
+# Project-specific generated outputs
+src/integration/playwright/data/output/
+main/hono/backend/src/presentation/public/uploads/
