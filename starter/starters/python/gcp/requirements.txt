@@ -1,0 +1,4 @@
+sqlalchemy>=2.0.0
+# Optional GCP integrations (export-gcs / export-bq サブコマンドで利用)
+google-cloud-bigquery>=3.17.0
+google-cloud-storage>=2.14.0

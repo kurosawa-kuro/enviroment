@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - <%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="<%= authConfig.clerkPublishableKey %>"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+  <style>
+    :root[data-theme="dark"] {
+      --pico-background-color: #0f1419;
+      --pico-card-background-color: #1a1f2e;
+      --pico-border-color: #2d3548;
+      --pico-color: #c9d1d9;
+      --pico-h1-color: #f0f6fc;
+      --pico-primary: #58a6ff;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--pico-background-color);
+    }
+
+    .login-container {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      color: var(--pico-h1-color);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .login-logo svg {
+      width: 48px;
+      height: 48px;
+      fill: var(--pico-primary);
+    }
+
+    #clerk-sign-in {
+      display: flex;
+      justify-content: center;
+    }
+
+    .loading {
+      color: var(--pico-color);
+      font-size: 1rem;
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 1.5rem;
+      color: var(--pico-color);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+      color: var(--pico-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path d="M31.956 14.8C31.372 6.92 25.08.628 17.2.044V5.76a9.04 9.04 0 0 0 9.04 9.04h5.716ZM14.8 26.24v5.716C6.92 31.372.63 25.08.044 17.2H5.76a9.04 9.04 0 0 1 9.04 9.04Zm11.44-9.04h5.716c-.584 7.88-6.876 14.172-14.756 14.756V26.24a9.04 9.04 0 0 1 9.04-9.04ZM.044 14.8C.63 6.92 6.92.628 14.8.044V5.76a9.04 9.04 0 0 1-9.04 9.04H.044Z"/>
+      </svg>
+      <span><%= title %></span>
+    </div>
+
+    <div id="clerk-sign-in">
+      <p class="loading">Loading...</p>
+    </div>
+
+    <a href="/dashboard" class="back-link">Back to Dashboard</a>
+  </div>
+
+  <script>
+    window.addEventListener('load', async () => {
+      if (window.Clerk) {
+        try {
+          await window.Clerk.load();
+
+          // Already signed in? Redirect
+          if (window.Clerk.user) {
+            const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
+            window.location.href = redirect;
+            return;
+          }
+
+          // Mount SignIn component
+          const container = document.getElementById('clerk-sign-in');
+          container.innerHTML = '';
+          window.Clerk.mountSignIn(container, {
+            afterSignInUrl: new URLSearchParams(window.location.search).get('redirect') || '/dashboard',
+            afterSignUpUrl: new URLSearchParams(window.location.search).get('redirect') || '/dashboard',
+            appearance: {
+              variables: {
+                colorPrimary: '#58a6ff',
+                colorBackground: '#1a1f2e',
+                colorInputBackground: '#0d1117',
+                colorInputText: '#c9d1d9',
+                colorText: '#c9d1d9',
+                colorTextSecondary: '#8b949e'
+              },
+              elements: {
+                socialButtonsBlockButton: {
+                  color: '#ffffff'
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.error('Clerk error:', e);
+          document.getElementById('clerk-sign-in').innerHTML = '<p style="color: #f85149;">Failed to load login. Please refresh.</p>';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

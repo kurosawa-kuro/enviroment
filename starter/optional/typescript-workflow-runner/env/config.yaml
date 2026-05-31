@@ -1,0 +1,9 @@
+# アプリケーション設定
+
+projectName: workflow-runner
+appEnv: local
+logLevel: debug
+dbPath: data/workflow-runner.db
+
+# 実行モード: workflow | cli
+runnerMode: workflow

@@ -1,0 +1,26 @@
+# Render Warm-up ワークフロー
+#
+# セットアップ:
+#   1. このファイルを .github/workflows/render-warmup.yml にコピー
+#   2. GitHub Secrets に WARMUP_URL を設定
+#      例: https://<your-app>.onrender.com/api/health
+#
+# 詳細: docs/05-セットアップ/02-render-warmup.md
+
+name: Render Warm Up
+
+on:
+  schedule:
+    # 12分おき（Renderのスリープ閾値15分より短く）
+    - cron: "*/12 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping warmup URL
+        run: |
+          set -eu
+          echo "Pinging: ${{ secrets.WARMUP_URL }}"
+          curl -fsSL -A "gh-actions-warmup" "${{ secrets.WARMUP_URL }}" > /dev/null

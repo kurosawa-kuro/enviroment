@@ -1,0 +1,265 @@
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a href="/dashboard">Dashboard</a>
+  <span>/</span>
+  <a href="/dashboard/microposts">Microposts</a>
+  <span>/</span>
+  <span>Create</span>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Create Micropost</h2>
+  </div>
+</div>
+
+<!-- Create Micropost Form -->
+<article style="max-width: 600px;">
+  <form id="micropost-form" enctype="multipart/form-data">
+    <div class="form-field">
+      <label for="title-input">
+        Title <span class="field-badge required">Required</span>
+      </label>
+      <input
+        type="text"
+        id="title-input"
+        name="title"
+        placeholder="Enter title..."
+        required
+      >
+    </div>
+
+    <div class="form-field">
+      <label for="body-input">
+        Body <span class="field-badge required">Required</span>
+      </label>
+      <textarea
+        id="body-input"
+        name="body"
+        placeholder="Enter body text..."
+        rows="6"
+        required
+        style="resize: vertical;"
+      ></textarea>
+    </div>
+
+    <div class="form-field">
+      <label for="status-input">
+        Status <span class="field-badge optional">Optional</span>
+      </label>
+      <select id="status-input" name="status">
+        <option value="draft" selected>Draft</option>
+        <option value="published">Published</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label for="image-input">
+        Image <span class="field-badge optional">Optional</span>
+      </label>
+      <input
+        type="file"
+        id="image-input"
+        name="image"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+      >
+      <div id="image-preview" class="image-preview-container"></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" style="margin: 0;">
+        Create
+      </button>
+      <a href="/dashboard/microposts" class="button outline" style="margin: 0;">Cancel</a>
+    </div>
+  </form>
+</article>
+
+<style>
+  .form-field {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    margin: 0;
+  }
+
+  .field-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-radius: 3px;
+  }
+
+  .field-badge.required {
+    background: rgba(248, 81, 73, 0.15);
+    color: var(--pico-danger);
+  }
+
+  .field-badge.optional {
+    background: rgba(139, 148, 158, 0.15);
+    color: var(--pico-muted-color);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+  }
+
+  .image-preview-container {
+    margin-top: 0.75rem;
+  }
+
+  .image-preview-item {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+  }
+
+  .image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-preview-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .image-preview-item .remove-btn:hover {
+    background: var(--pico-danger);
+  }
+
+  .image-preview-item .file-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+
+<script>
+  const API_URL = '/dashboard/microposts/api';
+  const imageInput = document.getElementById('image-input');
+  const previewContainer = document.getElementById('image-preview');
+  let selectedFile = null;
+
+  // Handle file selection
+  imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      selectedFile = file;
+      updatePreview();
+    }
+  });
+
+  function updatePreview() {
+    previewContainer.innerHTML = '';
+    if (!selectedFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'image-preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="">
+        <button type="button" class="remove-btn">&times;</button>
+        <div class="file-name">${selectedFile.name}</div>
+      `;
+      previewContainer.appendChild(div);
+    };
+    reader.readAsDataURL(selectedFile);
+  }
+
+  // Handle remove button
+  previewContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+      selectedFile = null;
+      imageInput.value = '';
+      updatePreview();
+    }
+  });
+
+  document.getElementById('micropost-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = 'Creating...';
+
+    try {
+      const formData = new FormData();
+      formData.append('title', document.getElementById('title-input').value);
+      formData.append('body', document.getElementById('body-input').value);
+      formData.append('status', document.getElementById('status-input').value);
+
+      if (selectedFile) {
+        formData.append('image', selectedFile);
+      }
+
+      const res = await apiFetch(API_URL, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        window.location.href = '/dashboard/microposts/' + data.data.micropost.id;
+      } else {
+        const data = await res.json();
+        alert(data.error || data.message || 'Failed to create micropost');
+      }
+    } catch (err) {
+      console.error('Failed to create micropost:', err);
+      alert('Failed to create micropost');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      btn.textContent = originalText;
+    }
+  });
+</script>

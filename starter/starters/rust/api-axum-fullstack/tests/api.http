@@ -1,0 +1,31 @@
+### Rust Axum Backend API Tests
+### Base URL
+@baseUrl = http://localhost:8080
+
+###############################################
+# Health Check
+###############################################
+
+### Health Check
+GET {{baseUrl}}/api/health
+
+###############################################
+# Microposts API
+###############################################
+
+### List Microposts
+GET {{baseUrl}}/api/microposts
+
+### Create Micropost
+POST {{baseUrl}}/api/microposts
+Content-Type: application/json
+
+{
+  "title": "Hello World"
+}
+
+### Get Micropost by ID
+GET {{baseUrl}}/api/microposts/1
+
+### Not Found (unknown API path)
+GET {{baseUrl}}/api/nonexistent

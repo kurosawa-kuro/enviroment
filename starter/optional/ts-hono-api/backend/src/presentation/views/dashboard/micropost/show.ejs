@@ -1,0 +1,224 @@
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a href="/dashboard">Dashboard</a>
+  <span>/</span>
+  <a href="/dashboard/microposts">Microposts</a>
+  <span>/</span>
+  <span>Detail</span>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Micropost Detail</h2>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="/dashboard/microposts/<%= micropostId %>/edit" class="button small">Edit</a>
+    <button id="delete-btn" class="button small outline" style="background: var(--pico-del-color); border-color: var(--pico-del-color); color: white;">Delete</button>
+    <a href="/dashboard/microposts" class="button small outline">Back</a>
+  </div>
+</div>
+
+<!-- Micropost Detail -->
+<article id="micropost-detail" style="max-width: 900px;">
+  <div class="empty-state" aria-busy="true">Loading...</div>
+</article>
+
+<style>
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+  .detail-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--pico-muted-color);
+    padding-top: 0.2rem;
+  }
+  .detail-value {
+    color: var(--pico-color);
+  }
+  .detail-value.mono {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 1rem;
+  }
+  .detail-value.title {
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+  .detail-value.body {
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .status-badge.draft {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+  }
+  .status-badge.published {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+  }
+  .image-card {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .image-card:hover {
+    border-color: var(--pico-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .detail-no-image {
+    width: 200px;
+    height: 200px;
+    background: var(--pico-background-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pico-muted-color);
+    font-size: 1rem;
+  }
+</style>
+
+<script>
+  const micropostId = '<%= micropostId %>';
+  const API_URL = '/dashboard/microposts/api/' + micropostId;
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function loadMicropost() {
+    const detailEl = document.getElementById('micropost-detail');
+
+    try {
+      const res = await apiFetch(API_URL);
+
+      if (res.status === 404) {
+        detailEl.innerHTML = `
+          <div class="empty-state">
+            <p style="margin: 0; color: var(--pico-danger); font-size: 1rem;">Micropost not found</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 1rem;">
+              <a href="/dashboard/microposts">Return to list</a>
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.error) {
+        detailEl.innerHTML = '<div class="empty-state">' + escapeHtml(data.error) + '</div>';
+        return;
+      }
+
+      const post = data.data?.micropost;
+
+      let imageHtml = '';
+      if (post.imagePath) {
+        imageHtml = `
+          <a href="${escapeHtml(post.imagePath)}" target="_blank" class="image-card">
+            <img src="${escapeHtml(post.imagePath)}" alt="">
+          </a>
+        `;
+      } else {
+        imageHtml = '<div class="detail-no-image">No image</div>';
+      }
+
+      const createdAt = post.createdAt
+        ? new Date(post.createdAt).toLocaleString('ja-JP')
+        : '-';
+      const updatedAt = post.updatedAt
+        ? new Date(post.updatedAt).toLocaleString('ja-JP')
+        : '-';
+
+      detailEl.innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-label">ID</div>
+          <div class="detail-value mono">${escapeHtml(post.id)}</div>
+
+          <div class="detail-label">Title</div>
+          <div class="detail-value title">${escapeHtml(post.title)}</div>
+
+          <div class="detail-label">Body</div>
+          <div class="detail-value body">${escapeHtml(post.body)}</div>
+
+          <div class="detail-label">Status</div>
+          <div class="detail-value">
+            <span class="status-badge ${escapeHtml(post.status)}">${escapeHtml(post.status)}</span>
+          </div>
+
+          <div class="detail-label">Creator ID</div>
+          <div class="detail-value mono">${escapeHtml(post.creatorId)}</div>
+
+          <div class="detail-label">Created At</div>
+          <div class="detail-value">${createdAt}</div>
+
+          <div class="detail-label">Updated At</div>
+          <div class="detail-value">${updatedAt}</div>
+
+          <div class="detail-label">Image</div>
+          <div class="detail-value">${imageHtml}</div>
+        </div>
+      `;
+    } catch (err) {
+      console.error('Failed to load micropost:', err);
+      detailEl.innerHTML = '<div class="empty-state">Failed to load data</div>';
+    }
+  }
+
+  loadMicropost();
+
+  // Delete handler
+  document.getElementById('delete-btn').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to delete this micropost?')) {
+      return;
+    }
+
+    const btn = document.getElementById('delete-btn');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+
+    try {
+      const res = await apiFetch(API_URL, { method: 'DELETE' });
+
+      if (res.ok) {
+        window.location.href = '/dashboard/microposts';
+      } else {
+        const data = await res.json();
+        alert(data.error || data.message || 'Failed to delete micropost');
+      }
+    } catch (err) {
+      console.error('Failed to delete micropost:', err);
+      alert('Failed to delete micropost');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+    }
+  });
+</script>

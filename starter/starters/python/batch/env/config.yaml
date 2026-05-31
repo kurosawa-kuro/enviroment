@@ -1,0 +1,15 @@
+# Public-safe sample settings.
+#
+# The batch currently uses command-line arguments. Keep this file as documented
+# defaults for local runs and do not put secrets here.
+
+projectName: python-batch
+appEnv: local
+logLevel: info
+
+paths:
+  input: data/items.csv
+  output: output/summary.json
+
+sample:
+  enabled: true

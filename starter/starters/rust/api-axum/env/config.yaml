@@ -1,0 +1,9 @@
+# Public-safe sample settings.
+#
+# This starter reads runtime values from environment variables.
+# Keep this file as documentation for local defaults and do not put secrets here.
+
+projectName: rust-api-axum
+appEnv: local
+port: 8080
+logLevel: info

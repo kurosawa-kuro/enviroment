@@ -1,0 +1,523 @@
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a href="/dashboard">Dashboard</a>
+  <span>/</span>
+  <span>Settings</span>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Settings</h2>
+  </div>
+</div>
+
+<!-- Two Column Layout -->
+<div class="settings-layout">
+  <!-- Settings Form -->
+  <article class="settings-form-section">
+    <div class="section-header">
+      <h3>Configuration</h3>
+    </div>
+    <form id="settings-form">
+      <div class="form-group">
+        <label>
+          Cloud Mode
+          <span class="setting-level level-warning">Caution</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="is-cloud" name="isCloud">
+          <span class="toggle-slider"></span>
+          <span class="toggle-text" id="is-cloud-text">Disabled</span>
+        </label>
+        <small class="form-hint hint-warning">Enables external API calls. May incur costs and send data externally.</small>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Stub Mode
+          <span class="setting-level level-safe">Safe</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="is-stub" name="isStub">
+          <span class="toggle-slider"></span>
+          <span class="toggle-text" id="is-stub-text">Disabled</span>
+        </label>
+        <small class="form-hint hint-safe">Returns mock data for development/testing. No external calls.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="ai-model">
+          AI Model
+          <span class="setting-level level-info">Config</span>
+        </label>
+        <select id="ai-model" name="aiModel">
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="gpt-4o-mini">GPT-4o Mini</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          <option value="claude-3-opus">Claude 3 Opus</option>
+          <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+          <option value="claude-3-haiku">Claude 3 Haiku</option>
+          <option value="gemini-pro">Gemini Pro</option>
+          <option value="gemini-flash">Gemini Flash</option>
+        </select>
+        <small class="form-hint hint-info">Affects response quality and processing cost.</small>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="save-btn">Save Settings</button>
+        <button type="button" class="outline" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+  </article>
+
+  <!-- Settings History List -->
+  <article class="settings-list-section">
+    <div class="section-header">
+      <h3>Current Settings</h3>
+      <span id="last-updated" class="badge">-</span>
+    </div>
+
+    <div class="current-settings" id="current-settings">
+      <div class="empty-state" aria-busy="true">Loading...</div>
+    </div>
+
+    <!-- History -->
+    <div class="section-header" style="margin-top: 2rem;">
+      <h3>History</h3>
+      <span id="history-count" class="badge">-</span>
+    </div>
+
+    <div class="history-list" id="history-list">
+      <div class="empty-state" aria-busy="true">Loading...</div>
+    </div>
+  </article>
+</div>
+
+<style>
+  .settings-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+  }
+
+  .section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--pico-h2-color);
+  }
+
+  /* Form Styles */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group > label:first-child {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .form-group input[type="text"],
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    margin: 0;
+  }
+
+  .form-hint {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
+  }
+
+  .form-hint.hint-warning {
+    color: rgba(210, 153, 34, 0.85);
+  }
+
+  .form-hint.hint-safe {
+    color: rgba(63, 185, 80, 0.75);
+  }
+
+  .form-hint.hint-info {
+    color: rgba(88, 166, 255, 0.75);
+  }
+
+  /* Setting Level Badges */
+  .setting-level {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-radius: 3px;
+    vertical-align: middle;
+  }
+
+  .level-warning {
+    background: rgba(210, 153, 34, 0.2);
+    color: #d29922;
+  }
+
+  .level-safe {
+    background: rgba(63, 185, 80, 0.15);
+    color: #3fb950;
+  }
+
+  .level-info {
+    background: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+  }
+
+  .form-actions button {
+    margin: 0;
+  }
+
+  /* Toggle Switch */
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+  }
+
+  .toggle-label input {
+    display: none;
+  }
+
+  .toggle-slider {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: var(--pico-muted-border-color);
+    border-radius: 28px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .toggle-slider:before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .toggle-label input:checked + .toggle-slider {
+    background: var(--pico-primary);
+  }
+
+  .toggle-label input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+  }
+
+  .toggle-text {
+    font-size: 0.95rem;
+    color: var(--pico-muted-color);
+  }
+
+  .toggle-label input:checked ~ .toggle-text {
+    color: var(--pico-primary);
+  }
+
+  /* Current Settings */
+  .current-settings {
+    padding: 1rem;
+    background: var(--pico-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 8px;
+  }
+
+  .settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+  }
+
+  .settings-item:last-child {
+    border-bottom: none;
+  }
+
+  .settings-item-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--pico-muted-color);
+  }
+
+  .settings-item-value {
+    font-weight: 500;
+    color: var(--pico-color);
+  }
+
+  .settings-item-value.true {
+    color: var(--pico-success);
+  }
+
+  .settings-item-value.false {
+    color: var(--pico-muted-color);
+  }
+
+  /* History List */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    padding: 0.75rem 1rem;
+    background: var(--pico-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .history-item-date {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
+  }
+
+  .history-item-values {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .history-item-value {
+    font-size: 0.85rem;
+  }
+
+  .history-item-value span {
+    color: var(--pico-muted-color);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .settings-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .history-item-values {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .settings-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+</style>
+
+<script>
+  const API_URL = '/settings/api';
+
+  // Toggle text update
+  document.getElementById('is-cloud').addEventListener('change', (e) => {
+    document.getElementById('is-cloud-text').textContent = e.target.checked ? 'Enabled' : 'Disabled';
+  });
+  document.getElementById('is-stub').addEventListener('change', (e) => {
+    document.getElementById('is-stub-text').textContent = e.target.checked ? 'Enabled' : 'Disabled';
+  });
+
+  // Load current settings
+  async function loadSettings() {
+    const currentEl = document.getElementById('current-settings');
+    const lastUpdatedEl = document.getElementById('last-updated');
+
+    try {
+      const res = await apiFetch(API_URL);
+      const data = await res.json();
+
+      if (!data.settings) {
+        currentEl.innerHTML = '<div class="empty-state">No settings configured yet</div>';
+        lastUpdatedEl.textContent = 'Not set';
+        return;
+      }
+
+      const s = data.settings;
+
+      // Update form with current values
+      document.getElementById('is-cloud').checked = s.isCloud;
+      document.getElementById('is-cloud-text').textContent = s.isCloud ? 'Enabled' : 'Disabled';
+      document.getElementById('is-stub').checked = s.isStub;
+      document.getElementById('is-stub-text').textContent = s.isStub ? 'Enabled' : 'Disabled';
+      document.getElementById('ai-model').value = s.aiModel;
+
+      // Display current settings with level indicators
+      currentEl.innerHTML = `
+        <div class="settings-item">
+          <span class="settings-item-label">
+            Cloud Mode
+            <span class="setting-level level-warning">Caution</span>
+          </span>
+          <span class="settings-item-value ${s.isCloud}">${s.isCloud ? 'Enabled' : 'Disabled'}</span>
+        </div>
+        <div class="settings-item">
+          <span class="settings-item-label">
+            Stub Mode
+            <span class="setting-level level-safe">Safe</span>
+          </span>
+          <span class="settings-item-value ${s.isStub}">${s.isStub ? 'Enabled' : 'Disabled'}</span>
+        </div>
+        <div class="settings-item">
+          <span class="settings-item-label">
+            AI Model
+            <span class="setting-level level-info">Config</span>
+          </span>
+          <span class="settings-item-value">${escapeHtml(s.aiModel)}</span>
+        </div>
+      `;
+
+      lastUpdatedEl.textContent = new Date(s.updatedAt).toLocaleString('ja-JP');
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+      currentEl.innerHTML = '<div class="empty-state">Failed to load settings</div>';
+    }
+  }
+
+  // Load history
+  async function loadHistory() {
+    const historyEl = document.getElementById('history-list');
+    const countEl = document.getElementById('history-count');
+
+    try {
+      const res = await apiFetch(API_URL + '/history');
+      const data = await res.json();
+
+      const history = data.history || [];
+      countEl.textContent = history.length;
+
+      if (history.length === 0) {
+        historyEl.innerHTML = '<div class="empty-state">No history yet</div>';
+        return;
+      }
+
+      historyEl.innerHTML = history.map(h => `
+        <div class="history-item">
+          <div class="history-item-header">
+            <span class="history-item-date">${new Date(h.updatedAt).toLocaleString('ja-JP')}</span>
+          </div>
+          <div class="history-item-values">
+            <span class="history-item-value"><span>Cloud:</span> ${h.isCloud ? 'ON' : 'OFF'}</span>
+            <span class="history-item-value"><span>Stub:</span> ${h.isStub ? 'ON' : 'OFF'}</span>
+            <span class="history-item-value"><span>Model:</span> ${escapeHtml(h.aiModel)}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('Failed to load history:', err);
+      historyEl.innerHTML = '<div class="empty-state">Failed to load history</div>';
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Save settings
+  document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    const originalText = btn.textContent;
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = 'Saving...';
+
+    try {
+      const res = await apiFetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isCloud: document.getElementById('is-cloud').checked,
+          isStub: document.getElementById('is-stub').checked,
+          aiModel: document.getElementById('ai-model').value
+        })
+      });
+
+      if (res.ok) {
+        await loadSettings();
+        await loadHistory();
+        alert('Settings saved successfully!');
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to save settings');
+      }
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      alert('Failed to save settings');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      btn.textContent = originalText;
+    }
+  });
+
+  function resetForm() {
+    loadSettings();
+  }
+
+  // Initial load
+  loadSettings();
+  loadHistory();
+</script>

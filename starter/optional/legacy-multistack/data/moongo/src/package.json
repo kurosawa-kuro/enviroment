@@ -1,0 +1,19 @@
+{
+  "name": "moongo",
+  "version": "1.0.0",
+  "description": "Simple MongoDB Atlas connection test",
+  "main": "connection-test-direct.js",
+  "scripts": {
+    "start": "node connection-test-direct.js",
+    "start:env": "node connection-test-env.js",
+    "start:doppler": "doppler run node connection-test-doppler.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["mongodb", "atlas", "database"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.3.0",
+    "dotenv": "^16.3.1"
+  }
+}

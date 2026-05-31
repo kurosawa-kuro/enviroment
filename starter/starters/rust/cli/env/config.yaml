@@ -1,0 +1,11 @@
+# Public-safe sample settings.
+#
+# The CLI currently uses command-line arguments. Keep this file as a place for
+# non-secret local defaults when the starter grows.
+
+projectName: rust-cli
+appEnv: local
+logLevel: info
+
+defaults:
+  greetingTarget: world

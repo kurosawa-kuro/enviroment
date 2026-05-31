@@ -1,0 +1,18 @@
+# Public-safe sample settings.
+#
+# Runtime values are currently supplied through environment variables.
+# Keep real DB URLs, service account paths, tokens, and Project IDs out of this file.
+
+projectName: python-api-fastapi
+appEnv: local
+host: 127.0.0.1
+port: 8000
+logLevel: info
+
+database:
+  url: sqlite:///./microposts.db
+
+gcpLogging:
+  enabled: false
+  useClient: false
+  projectId: example-project

@@ -1,0 +1,344 @@
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a href="/dashboard">Dashboard</a>
+  <span>/</span>
+  <a href="/dashboard/microposts">Microposts</a>
+  <span>/</span>
+  <span>Edit</span>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Edit Micropost</h2>
+  </div>
+</div>
+
+<!-- Edit Micropost Form -->
+<article id="edit-form-container" style="max-width: 600px;">
+  <div class="empty-state" aria-busy="true">Loading...</div>
+</article>
+
+<style>
+  .form-field {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    margin: 0;
+  }
+
+  .field-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-radius: 3px;
+  }
+
+  .field-badge.required {
+    background: rgba(248, 81, 73, 0.15);
+    color: var(--pico-danger);
+  }
+
+  .field-badge.optional {
+    background: rgba(139, 148, 158, 0.15);
+    color: var(--pico-muted-color);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+  }
+
+  .image-preview-container {
+    margin-top: 0.75rem;
+  }
+
+  .image-preview-item {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+  }
+
+  .image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-preview-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .image-preview-item .remove-btn:hover {
+    background: var(--pico-danger);
+  }
+
+  .current-image {
+    margin-top: 0.5rem;
+  }
+
+  .current-image img {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 6px;
+    border: 1px solid var(--pico-muted-border-color);
+  }
+
+  .current-image-label {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<script>
+  const micropostId = '<%= micropostId %>';
+  const API_URL = '/dashboard/microposts/api/' + micropostId;
+  let selectedFile = null;
+  let currentImagePath = null;
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderForm(post) {
+    const container = document.getElementById('edit-form-container');
+    currentImagePath = post.imagePath;
+
+    let currentImageHtml = '';
+    if (post.imagePath) {
+      currentImageHtml = `
+        <div class="current-image">
+          <div class="current-image-label">Current image:</div>
+          <img src="${escapeHtml(post.imagePath)}" alt="">
+        </div>
+      `;
+    }
+
+    container.innerHTML = `
+      <form id="micropost-form" enctype="multipart/form-data">
+        <div class="form-field">
+          <label for="title-input">
+            Title <span class="field-badge required">Required</span>
+          </label>
+          <input
+            type="text"
+            id="title-input"
+            name="title"
+            placeholder="Enter title..."
+            value="${escapeHtml(post.title)}"
+            required
+          >
+        </div>
+
+        <div class="form-field">
+          <label for="body-input">
+            Body <span class="field-badge required">Required</span>
+          </label>
+          <textarea
+            id="body-input"
+            name="body"
+            placeholder="Enter body text..."
+            rows="6"
+            required
+            style="resize: vertical;"
+          >${escapeHtml(post.body)}</textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="status-input">
+            Status
+          </label>
+          <select id="status-input" name="status">
+            <option value="draft" ${post.status === 'draft' ? 'selected' : ''}>Draft</option>
+            <option value="published" ${post.status === 'published' ? 'selected' : ''}>Published</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="image-input">
+            Image <span class="field-badge optional">Optional</span>
+          </label>
+          ${currentImageHtml}
+          <input
+            type="file"
+            id="image-input"
+            name="image"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            style="margin-top: 0.5rem;"
+          >
+          <div id="image-preview" class="image-preview-container"></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" style="margin: 0;">
+            Update
+          </button>
+          <a href="/dashboard/microposts/${escapeHtml(micropostId)}" class="button outline" style="margin: 0;">Cancel</a>
+        </div>
+      </form>
+    `;
+
+    // Setup event listeners
+    setupFormListeners();
+  }
+
+  function setupFormListeners() {
+    const imageInput = document.getElementById('image-input');
+    const previewContainer = document.getElementById('image-preview');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedFile = file;
+        updatePreview();
+      }
+    });
+
+    previewContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-btn')) {
+        selectedFile = null;
+        imageInput.value = '';
+        updatePreview();
+      }
+    });
+
+    document.getElementById('micropost-form').addEventListener('submit', handleSubmit);
+  }
+
+  function updatePreview() {
+    const previewContainer = document.getElementById('image-preview');
+    previewContainer.innerHTML = '';
+    if (!selectedFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'image-preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="">
+        <button type="button" class="remove-btn">&times;</button>
+      `;
+      previewContainer.appendChild(div);
+    };
+    reader.readAsDataURL(selectedFile);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = 'Updating...';
+
+    try {
+      const formData = new FormData();
+      formData.append('title', document.getElementById('title-input').value);
+      formData.append('body', document.getElementById('body-input').value);
+      formData.append('status', document.getElementById('status-input').value);
+
+      if (selectedFile) {
+        formData.append('image', selectedFile);
+      }
+
+      const res = await apiFetch(API_URL, {
+        method: 'PUT',
+        body: formData
+      });
+
+      if (res.ok) {
+        window.location.href = '/dashboard/microposts/' + micropostId;
+      } else {
+        const data = await res.json();
+        alert(data.error || data.message || 'Failed to update micropost');
+      }
+    } catch (err) {
+      console.error('Failed to update micropost:', err);
+      alert('Failed to update micropost');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      btn.textContent = originalText;
+    }
+  }
+
+  async function loadMicropost() {
+    const container = document.getElementById('edit-form-container');
+
+    try {
+      const res = await apiFetch(API_URL);
+
+      if (res.status === 404) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p style="margin: 0; color: var(--pico-danger); font-size: 1rem;">Micropost not found</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 1rem;">
+              <a href="/dashboard/microposts">Return to list</a>
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.error) {
+        container.innerHTML = '<div class="empty-state">' + escapeHtml(data.error) + '</div>';
+        return;
+      }
+
+      const post = data.data?.micropost;
+      if (!post) {
+        container.innerHTML = '<div class="empty-state">Failed to load micropost data</div>';
+        return;
+      }
+
+      renderForm(post);
+    } catch (err) {
+      console.error('Failed to load micropost:', err);
+      container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+    }
+  }
+
+  loadMicropost();
+</script>

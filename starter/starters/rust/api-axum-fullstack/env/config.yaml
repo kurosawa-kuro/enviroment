@@ -1,0 +1,19 @@
+# Public-safe sample settings.
+#
+# This starter reads env/config.yaml and lets environment variables override it.
+# Do not put secrets, tokens, real DB URLs, or production hostnames here.
+
+projectName: rust-api-axum-fullstack
+appEnv: local
+port: 8080
+logLevel: info
+
+db:
+  path: data/db.sqlite3
+
+static:
+  dir: client/dist
+
+server:
+  timeout: 60
+  corsAllowAll: true

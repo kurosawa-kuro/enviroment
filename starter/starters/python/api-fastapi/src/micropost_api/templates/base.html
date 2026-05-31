@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Micropost{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+                <li><strong><a href="/">Microposts</a></strong></li>
+            </ul>
+            <ul>
+                <li><a href="/microposts/new" role="button">New</a></li>
+            </ul>
+        </nav>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

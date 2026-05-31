@@ -1,0 +1,21 @@
+{
+  "name": "starter-kit-renamer",
+  "version": "1.0.0",
+  "description": "言語 Node.js JS",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/starter-kit-renamer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/your-org/starter-kit-renamer/issues"
+  },
+  "homepage": "https://github.com/your-org/starter-kit-renamer#readme"
+}

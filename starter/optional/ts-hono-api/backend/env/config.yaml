@@ -1,0 +1,11 @@
+# アプリケーション設定
+# 環境変数より優先されます
+
+projectName: starter
+appEnv: local
+appMode: origin
+port: 8001
+logLevel: debug
+mongoDbName: starter
+authEnabled: false
+rateLimitPerMinute: 1000

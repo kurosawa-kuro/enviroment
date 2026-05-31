@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Microposts{% endblock %}
+{% block content %}
+<h1>Microposts</h1>
+{% if posts %}
+<table>
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Created</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts %}
+        <tr>
+            <td>{{ post.id }}</td>
+            <td><a href="/microposts/{{ post.id }}">{{ post.title }}</a></td>
+            <td><small>{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+            <td>
+                <a href="/microposts/{{ post.id }}/edit" role="button" class="secondary">Edit</a>
+                <form action="/microposts/{{ post.id }}/delete" method="post" style="display:inline;"
+                      onsubmit="return confirm('Delete this micropost?');">
+                    <button type="submit" class="contrast">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<article>
+    <p>No microposts yet. <a href="/microposts/new">Create the first one</a>.</p>
+</article>
+{% endif %}
+{% endblock %}

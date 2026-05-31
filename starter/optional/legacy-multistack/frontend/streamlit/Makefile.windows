@@ -1,0 +1,52 @@
+# Streamlit Todo App Makefile for Windows
+# Uses pipx for isolated Python application management
+
+.PHONY: install run dev clean test help setup-pipx
+
+# Settings
+PYTHONPATH = src
+STREAMLIT = streamlit
+
+help: ## Show this help message
+	@echo "Available commands:"
+	@echo "  setup-pipx - Setup pipx environment"
+	@echo "  install    - Install Streamlit and dependencies via pipx"
+	@echo "  run        - Run Streamlit application"
+	@echo "  dev        - Run in development mode with auto-reload"
+	@echo "  test       - Run tests"
+	@echo "  clean      - Clean cache files"
+	@echo "  start      - Quick start (setup + install + run)"
+
+setup-pipx: ## Setup pipx environment
+	@echo "Setting up pipx environment..."
+	python -m pip install --user pipx
+	python -m pipx ensurepath
+	@echo "✅ pipx setup completed"
+
+install: setup-pipx ## Install Streamlit and dependencies via pipx
+	@echo "Installing Streamlit via pipx..."
+	pipx install streamlit
+	pipx install python-dotenv
+	@echo "✅ Streamlit installed via pipx"
+
+run: ## Run Streamlit application
+	@echo "Starting Streamlit application..."
+	cd $(PYTHONPATH) && streamlit run app.py
+
+dev: ## Run Streamlit application in development mode
+	@echo "Starting Streamlit in development mode..."
+	cd $(PYTHONPATH) && streamlit run app.py --server.runOnSave true
+
+test: ## Run tests
+	@echo "Running tests..."
+	cd $(PYTHONPATH) && python -m pytest ../tests/ -v
+
+clean: ## Clean cache and temporary files
+	@echo "Cleaning cache files..."
+	del /s /q *.pyc 2>nul || true
+	rmdir /s /q __pycache__ 2>nul || true
+	rmdir /s /q *.egg-info 2>nul || true
+	rmdir /s /q .streamlit 2>nul || true
+	@echo "✅ Clean completed"
+
+start: install run ## Quick start: setup pipx, install dependencies and run the application 

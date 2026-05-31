@@ -1,0 +1,14 @@
+/target
+/coverage
+/data
+/.env
+/.env.*
+/env/secret.yaml
+/env/*.local.yaml
+/client/node_modules
+/client/dist
+/e2e/node_modules
+/e2e/dist
+/e2e/test-results
+/e2e/playwright-report
+/e2e/.playwright

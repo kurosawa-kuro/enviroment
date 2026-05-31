@@ -1,0 +1,23 @@
+{
+  "name": "openai-chatbot",
+  "version": "1.0.0",
+  "description": "OpenAI API integration sample",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/ai/simple-chat.js",
+    "chat": "node src/ai/chat.js",
+    "fetch": "node src/scraper/fetch-sample.js",
+    "normalize": "node src/subtitle/processor.js normalize",
+    "chunk": "node src/subtitle/processor.js chunk",
+    "process": "node src/subtitle/processor.js full",
+    "analyze": "node src/ai/analyze-transcript.js",
+    "decide": "node src/ai/risk-decision.js"
+  },
+  "dependencies": {
+    "openai": "^4.73.0",
+    "dotenv": "^16.4.5",
+    "readline": "^1.3.0",
+    "playwright": "^1.40.0"
+  }
+}

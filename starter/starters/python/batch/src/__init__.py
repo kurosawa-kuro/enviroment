@@ -1,0 +1,1 @@
+"""Simple Python batch starter."""

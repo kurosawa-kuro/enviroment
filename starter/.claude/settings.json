@@ -1,0 +1,92 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo build:*)",
+      "Bash(cargo run:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo watch:*)",
+      "Bash(cargo fetch:*)",
+      "Bash(rustfmt:*)",
+      "Bash(rustup component add:*)",
+      "Bash(npm install)",
+      "Bash(npm ci)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "Bash(tsx:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(pytest:*)",
+      "Bash(uvicorn:*)",
+      "Bash(terraform init:*)",
+      "Bash(terraform fmt:*)",
+      "Bash(terraform validate:*)",
+      "Bash(terraform plan:*)",
+      "Bash(doppler secrets --only-names:*)",
+      "Bash(doppler configure:*)",
+      "Bash(make build:*)",
+      "Bash(make run:*)",
+      "Bash(make dev:*)",
+      "Bash(make test:*)",
+      "Bash(make test-watch:*)",
+      "Bash(make fmt:*)",
+      "Bash(make clippy:*)",
+      "Bash(make check:*)",
+      "Bash(make lint:*)",
+      "Bash(make setup:*)",
+      "Bash(make deps:*)",
+      "Bash(make help:*)",
+      "Bash(make e2e:*)",
+      "Bash(make list:*)",
+      "Bash(make clean:*)",
+      "Bash(make release:*)",
+      "Bash(make init:*)",
+      "Bash(make validate:*)",
+      "Bash(make plan:*)",
+      "Bash(make greet:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(lsof:*)"
+    ],
+    "ask": [
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(make apply:*)",
+      "Bash(make destroy:*)",
+      "Bash(make deploy:*)",
+      "Bash(doppler run:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Read(./**/.env)",
+      "Read(./**/.env.local)",
+      "Read(./**/*.tfvars.local)",
+      "Read(./**/.terraform/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/format.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

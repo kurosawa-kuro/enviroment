@@ -1,0 +1,18 @@
+# Public-safe sample settings.
+#
+# The ML CLI currently uses command-line arguments. Keep this file as a
+# documented local/default config and do not put real GCP resources here.
+
+projectName: python-ml
+appEnv: local
+logLevel: info
+
+training:
+  datasetName: california-housing
+  modelName: lightgbm-california-housing
+  outputDir: artifacts
+  seed: 42
+
+gcp:
+  gcsPrefix: ""
+  bqMetricsTable: ""

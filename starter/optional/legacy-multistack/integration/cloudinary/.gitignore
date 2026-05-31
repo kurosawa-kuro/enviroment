@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Test files
+sample.png
+sample.jpg
+*.tmp
+
+# Logs
+*.log
+
+# OS
+.DS_Store

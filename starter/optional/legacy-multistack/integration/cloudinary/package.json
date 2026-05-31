@@ -1,0 +1,17 @@
+{
+  "name": "cloudinary-node-starter",
+  "version": "1.0.0",
+  "description": "Cloudinary Node.js Starter - Upload, List, Search, Delete",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "upload": "node src/cli/upload.js",
+    "list": "node src/cli/list.js",
+    "search": "node src/cli/search.js",
+    "delete": "node src/cli/delete.js"
+  },
+  "dependencies": {
+    "cloudinary": "^2.4.0",
+    "dotenv": "^16.4.0"
+  }
+}

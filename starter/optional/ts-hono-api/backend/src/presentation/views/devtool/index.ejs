@@ -1,0 +1,421 @@
+<!-- Section: System Health -->
+<div class="section-label">System Health</div>
+<div class="stats-grid stats-grid-3">
+  <!-- API Health -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-title">API Status</div>
+      <div class="stat-card-icon <%= health.status === 'ok' ? 'green' : 'red' %>">
+        <% if (health.status === 'ok') { %>
+        <!-- Heroicons: check-circle (solid) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+        </svg>
+        <% } else { %>
+        <!-- Heroicons: x-circle (solid) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd" />
+        </svg>
+        <% } %>
+      </div>
+    </div>
+    <div class="stat-card-value" style="color: var(--pico-<%= health.status === 'ok' ? 'success' : 'danger' %>);"><%= health.status === 'ok' ? 'Online' : 'Error' %></div>
+    <div class="stat-card-change <%= health.status === 'ok' ? 'positive' : 'negative' %>">
+      <%= health.message %><% if (health.latency !== undefined) { %> (<%= health.latency %>ms)<% } %>
+    </div>
+  </div>
+
+  <!-- Database Status -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-title">Database</div>
+      <div class="stat-card-icon <%= database.status === 'connected' ? 'green' : (database.status === 'disconnected' ? 'red' : 'amber') %>">
+        <!-- Heroicons: circle-stack (solid) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 6.375c0 2.692-4.03 4.875-9 4.875S3 9.067 3 6.375 7.03 1.5 12 1.5s9 2.183 9 4.875Z" />
+          <path d="M12 12.75c2.685 0 5.19-.586 7.078-1.609a8.283 8.283 0 0 0 1.897-1.384c.016.121.025.244.025.368C21 12.817 16.97 15 12 15s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.285 8.285 0 0 0 1.897 1.384C6.809 12.164 9.315 12.75 12 12.75Z" />
+          <path d="M12 16.5c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 0 0 1.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 0 0 1.897 1.384C6.809 15.914 9.315 16.5 12 16.5Z" />
+          <path d="M12 20.25c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 0 0 1.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 0 0 1.897 1.384C6.809 19.664 9.315 20.25 12 20.25Z" />
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card-value" style="font-size: 1.25rem; color: var(--pico-<%= database.status === 'connected' ? 'success' : (database.status === 'disconnected' ? 'danger' : 'warning') %>);"><%= database.type %></div>
+    <div class="stat-card-change">
+      <span class="badge <%= database.status === 'connected' ? 'success' : (database.status === 'disconnected' ? 'danger' : 'warning') %>"><%= database.status %></span>
+      <% if (database.latency !== undefined) { %><span style="margin-left: 0.5rem;">(<%= database.latency %>ms)</span><% } %>
+    </div>
+  </div>
+
+  <!-- Memory Usage -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-title">Memory Usage</div>
+      <div class="stat-card-icon purple">
+        <!-- Heroicons: cpu-chip (solid) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.5 7.5h-9v9h9v-9Z" />
+          <path fill-rule="evenodd" d="M8.25 2.25A.75.75 0 0 1 9 3v.75h2.25V3a.75.75 0 0 1 1.5 0v.75H15V3a.75.75 0 0 1 1.5 0v.75h.75a3 3 0 0 1 3 3v.75H21A.75.75 0 0 1 21 9h-.75v2.25H21a.75.75 0 0 1 0 1.5h-.75V15H21a.75.75 0 0 1 0 1.5h-.75v.75a3 3 0 0 1-3 3h-.75V21a.75.75 0 0 1-1.5 0v-.75h-2.25V21a.75.75 0 0 1-1.5 0v-.75H9V21a.75.75 0 0 1-1.5 0v-.75h-.75a3 3 0 0 1-3-3v-.75H3A.75.75 0 0 1 3 15h.75v-2.25H3a.75.75 0 0 1 0-1.5h.75V9H3a.75.75 0 0 1 0-1.5h.75v-.75a3 3 0 0 1 3-3h.75V3a.75.75 0 0 1 .75-.75ZM6 6.75A.75.75 0 0 1 6.75 6h10.5a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75V6.75Z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card-value" style="font-size: 1.25rem;"><%= systemInfo.memoryUsage.heapUsed %> MB</div>
+    <div class="stat-card-change">Heap: <%= systemInfo.memoryUsage.heapUsed %>/<%= systemInfo.memoryUsage.heapTotal %> MB | RSS: <%= systemInfo.memoryUsage.rss %> MB</div>
+  </div>
+</div>
+
+<!-- Section: System Info -->
+<div class="section-label">System Information</div>
+<div class="stats-grid stats-grid-4">
+  <div class="stat-card stat-card-compact">
+    <div class="stat-card-title">Node.js</div>
+    <div class="stat-card-value" style="font-size: 1.1rem;"><%= systemInfo.nodeVersion %></div>
+  </div>
+  <div class="stat-card stat-card-compact">
+    <div class="stat-card-title">Platform</div>
+    <div class="stat-card-value" style="font-size: 1.1rem;"><%= systemInfo.platform %> (<%= systemInfo.arch %>)</div>
+  </div>
+  <div class="stat-card stat-card-compact">
+    <div class="stat-card-title">Uptime</div>
+    <div class="stat-card-value" style="font-size: 1.1rem;"><%= Math.floor(systemInfo.uptime / 60) %>m <%= systemInfo.uptime % 60 %>s</div>
+  </div>
+  <div class="stat-card stat-card-compact">
+    <div class="stat-card-title">PID</div>
+    <div class="stat-card-value" style="font-size: 1.1rem;"><%= systemInfo.pid %></div>
+  </div>
+</div>
+
+<!-- Section: ConfigMap (Non-sensitive configuration) -->
+<div class="section-label">
+  <span class="k8s-icon configmap">CM</span>
+  ConfigMap
+  <span class="section-hint">Non-sensitive configuration values</span>
+</div>
+<article>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-variable">Variable</th>
+          <th>Value</th>
+          <th class="col-description">Description</th>
+          <th class="col-status">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% envVars.configMap.forEach(function(env) { %>
+        <tr>
+          <td><code><%= env.name %></code></td>
+          <td>
+            <code style="<%= env.isSet ? '' : 'color: var(--pico-muted-color);' %>"><%= env.value %></code>
+          </td>
+          <td style="color: var(--pico-muted-color); font-size: 0.85rem;"><%= env.description %></td>
+          <td>
+            <span class="badge <%= env.isSet ? 'success' : 'warning' %>"><%= env.isSet ? 'Set' : 'Not Set' %></span>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<!-- Section: Secret (Sensitive values) -->
+<div class="section-label">
+  <span class="k8s-icon secret">S</span>
+  Secret
+  <span class="section-hint">Sensitive values (base64 encoded in k8s)</span>
+</div>
+<article>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-variable">Variable</th>
+          <th>Value</th>
+          <th class="col-description">Description</th>
+          <th class="col-status">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% envVars.secret.forEach(function(env) { %>
+        <tr>
+          <td>
+            <code><%= env.name %></code>
+            <span class="badge secret-badge">SECRET</span>
+          </td>
+          <td>
+            <code style="<%= env.isSet ? '' : 'color: var(--pico-muted-color);' %>"><%= env.value %></code>
+          </td>
+          <td style="color: var(--pico-muted-color); font-size: 0.85rem;"><%= env.description %></td>
+          <td>
+            <span class="badge <%= env.isSet ? 'success' : 'warning' %>"><%= env.isSet ? 'Set' : 'Not Set' %></span>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<!-- Section: Quick Actions -->
+<div class="section-label">API Endpoints</div>
+<div class="action-grid-full">
+  <a href="/api/health" target="_blank" class="action-item" id="health-check-btn">
+    <!-- Heroicons: check-circle (solid) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--pico-success)">
+      <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+    </svg>
+    <span>/api/health</span>
+  </a>
+  <a href="/dashboard/microposts/api" target="_blank" class="action-item">
+    <!-- Heroicons: rectangle-stack (solid) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--pico-info)">
+      <path d="M5.566 4.657A4.505 4.505 0 0 1 6.75 4.5h10.5c.41 0 .806.055 1.183.157A3 3 0 0 0 15.75 3h-7.5a3 3 0 0 0-2.684 1.657ZM2.25 12a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3v-6ZM5.25 7.5c-.41 0-.806.055-1.184.157A3 3 0 0 1 6.75 6h10.5a3 3 0 0 1 2.683 1.657A4.505 4.505 0 0 0 18.75 7.5H5.25Z" />
+    </svg>
+    <span>/dashboard/microposts/api</span>
+  </a>
+  <a href="/api/info" target="_blank" class="action-item">
+    <!-- Heroicons: adjustments-horizontal (solid) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--pico-warning)">
+      <path d="M18.75 12.75h1.5a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5ZM12 6a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 12 6ZM12 18a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 12 18ZM3.75 6.75h1.5a.75.75 0 1 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5ZM5.25 18.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 0 1.5ZM3 12a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 3 12ZM9 3.75a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM12.75 12a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0ZM9 15.75a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5Z" />
+    </svg>
+    <span>/api/info</span>
+  </a>
+  <button class="action-item" onclick="refreshPage()" style="cursor: pointer; border: none;">
+    <!-- Heroicons: arrow-path (solid) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--pico-primary)">
+      <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0 1 12.548-3.364l1.903 1.903h-3.183a.75.75 0 0 0 0 1.5h4.992a.75.75 0 0 0 .75-.75V4.356a.75.75 0 0 0-1.5 0v3.18l-1.9-1.9A9 9 0 0 0 3.306 9.67a.75.75 0 1 0 1.45.388Zm15.408 3.352a.75.75 0 0 0-.919.53 7.5 7.5 0 0 1-12.548 3.364l-1.902-1.903h3.183a.75.75 0 0 0 0-1.5H2.984a.75.75 0 0 0-.75.75v4.992a.75.75 0 0 0 1.5 0v-3.18l1.9 1.9a9 9 0 0 0 15.059-4.035.75.75 0 0 0-.53-.918Z" clip-rule="evenodd" />
+    </svg>
+    <span>Refresh</span>
+  </button>
+</div>
+
+<p style="margin-top: 1.5rem; color: var(--pico-muted-color); font-size: 0.9rem;">
+  Last updated: <%= timestamp %>
+</p>
+
+<style>
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pico-muted-color);
+    margin-bottom: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .section-label:first-child {
+    margin-top: 0;
+  }
+
+  .section-hint {
+    font-size: 0.7rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--pico-muted-color);
+    opacity: 0.7;
+    margin-left: auto;
+  }
+
+  .k8s-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .k8s-icon.configmap {
+    background: rgba(50, 145, 255, 0.2);
+    color: #3291ff;
+    border: 1px solid rgba(50, 145, 255, 0.4);
+  }
+
+  .k8s-icon.secret {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.4);
+  }
+
+  .secret-badge {
+    margin-left: 0.5rem;
+    font-size: 0.65rem;
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+
+  .stats-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card-compact {
+    padding: 1rem;
+  }
+
+  .stat-card-compact .stat-card-title {
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-card-icon.red {
+    background: rgba(248, 81, 73, 0.2);
+    color: #f85149;
+  }
+
+  .action-grid-full {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--pico-color);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .action-item:hover {
+    background: rgba(88, 166, 255, 0.08);
+    border-color: var(--pico-primary);
+    transform: translateY(-1px);
+  }
+
+  .action-item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  code {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 0.95rem;
+  }
+
+  /* Responsive table */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .col-variable {
+    min-width: 180px;
+  }
+
+  .col-description {
+    min-width: 150px;
+  }
+
+  .col-status {
+    min-width: 80px;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .stats-grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .stats-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .action-grid-full {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .stats-grid-3 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .stats-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .action-grid-full {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid-3,
+    .stats-grid-4,
+    .action-grid-full {
+      grid-template-columns: 1fr;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .data-table th {
+      font-size: 0.8rem;
+    }
+
+    .data-table code {
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+
+    .section-hint {
+      display: none;
+    }
+
+    .stat-card-change {
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .action-item {
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .action-item svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stat-card-value {
+      font-size: 1rem;
+    }
+
+    .stat-card-compact .stat-card-value {
+      font-size: 0.95rem;
+    }
+  }
+</style>
+
+<script>
+  function refreshPage() {
+    window.location.reload();
+  }
+</script>

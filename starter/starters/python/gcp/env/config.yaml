@@ -1,0 +1,20 @@
+# Public-safe sample settings.
+#
+# The CLI currently uses command-line arguments and local SQLite defaults.
+# Keep real Project IDs, bucket names, and service account values out of this file.
+
+projectName: python-gcp
+appEnv: local
+logLevel: info
+
+database:
+  url: sqlite:///./microposts.db
+
+export:
+  localNdjson: posts.ndjson
+  gcsUri: gs://example-bucket/path/posts.ndjson
+  bigQueryTable: example_project.example_dataset.microposts
+
+gcp:
+  projectId: example-project
+  location: asia-northeast1

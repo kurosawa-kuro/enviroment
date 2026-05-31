@@ -1,0 +1,6 @@
+/target
+/coverage
+.env
+.env.*
+env/secret.yaml
+env/*.local.yaml

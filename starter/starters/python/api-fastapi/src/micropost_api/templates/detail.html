@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<article>
+    <header>
+        <h1>{{ post.title }}</h1>
+        <small>
+            Created: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+            &middot; Updated: {{ post.updated_at.strftime('%Y-%m-%d %H:%M') }}
+        </small>
+    </header>
+    <p style="white-space: pre-wrap;">{{ post.content }}</p>
+    <footer>
+        <a href="/microposts/{{ post.id }}/edit" role="button" class="secondary">Edit</a>
+        <form action="/microposts/{{ post.id }}/delete" method="post" style="display:inline;"
+              onsubmit="return confirm('Delete this micropost?');">
+            <button type="submit" class="contrast">Delete</button>
+        </form>
+        <a href="/">Back to list</a>
+    </footer>
+</article>
+{% endblock %}

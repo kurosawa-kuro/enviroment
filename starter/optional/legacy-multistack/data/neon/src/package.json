@@ -1,0 +1,22 @@
+{
+  "name": "src",
+  "version": "1.0.0",
+  "description": "Simple Neon database connection test",
+  "main": "neon.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node connection-test-direct.js",
+    "start:env": "node connection-test-env.js",
+    "start:doppler": "doppler run node connection-test-doppler.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["neon", "postgresql", "database"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+}

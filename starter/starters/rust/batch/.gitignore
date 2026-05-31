@@ -1,0 +1,26 @@
+# Rust build artifacts
+/target/
+
+# SQLite database files
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment overrides (keep config.yaml tracked)
+.env
+.env.local
+.env.*
+env/secret.yaml
+env/*.local.yaml
