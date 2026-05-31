@@ -39,35 +39,21 @@
         name: user-bootstrap
       when: components.user_bootstrap.enabled | default(false)
 
-    - name: Install Rust
+    - name: Install selected development runtimes
       import_role:
         name: development-runtime
-        tasks_from: rust
-      when: components.rust.enabled | default(false)
-
-    - name: Install Node.js
-      import_role:
-        name: development-runtime
-        tasks_from: nodejs
-      when: components.nodejs.enabled | default(false)
-
-    - name: Install Go
-      import_role:
-        name: development-runtime
-        tasks_from: golang
-      when: components.go.enabled | default(false)
-
-    - name: Install Java
-      import_role:
-        name: development-runtime
-        tasks_from: java
-      when: components.java.enabled | default(false)
-
-    - name: Install Kotlin
-      import_role:
-        name: development-runtime
-        tasks_from: kotlin
-      when: components.kotlin.enabled | default(false)
+      vars:
+        install_rust_enabled: "{{ components.rust.enabled | default(false) }}"
+        install_nodejs_enabled: "{{ components.nodejs.enabled | default(false) }}"
+        install_go_enabled: "{{ components.go.enabled | default(false) }}"
+        install_java_enabled: "{{ components.java.enabled | default(false) }}"
+        install_kotlin_enabled: "{{ components.kotlin.enabled | default(false) }}"
+      when:
+        - components.rust.enabled | default(false)
+          or components.nodejs.enabled | default(false)
+          or components.go.enabled | default(false)
+          or components.java.enabled | default(false)
+          or components.kotlin.enabled | default(false)
 
     - name: Install Docker
       import_role:

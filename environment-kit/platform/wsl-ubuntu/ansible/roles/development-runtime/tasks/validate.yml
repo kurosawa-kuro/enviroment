@@ -6,18 +6,24 @@
       command: "{{ item.cmd }}"
       register: version_check
       failed_when: version_check.rc != 0
-      loop:
-        - { name: "rustc", cmd: "/opt/rust/bin/rustc --version" }
-        - { name: "cargo", cmd: "/opt/rust/bin/cargo --version" }
-        - { name: "node", cmd: "node --version" }
-        - { name: "npm", cmd: "npm --version" }
-        - { name: "go", cmd: "go version" }
+      when: item.enabled | bool
+      loop_control:
+        label: "{{ item.name }}"
+      vars:
+        runtime_validation_targets:
+          - { name: "rustc", cmd: "/opt/rust/bin/rustc --version", enabled: "{{ install_rust_enabled | default(true) | bool }}" }
+          - { name: "cargo", cmd: "/opt/rust/bin/cargo --version", enabled: "{{ install_rust_enabled | default(true) | bool }}" }
+          - { name: "node", cmd: "node --version", enabled: "{{ install_nodejs_enabled | default(true) | bool }}" }
+          - { name: "npm", cmd: "npm --version", enabled: "{{ install_nodejs_enabled | default(true) | bool }}" }
+          - { name: "go", cmd: "go version", enabled: "{{ install_go_enabled | default(true) | bool }}" }
+      loop: "{{ runtime_validation_targets }}"
 
     - name: "Test Node.js functionality"
       shell: |
         node -e "console.log('Node.js test passed')"
       register: node_test
       failed_when: node_test.rc != 0
+      when: install_nodejs_enabled | default(true)
 
     - name: "Test Go functionality"
       shell: |
@@ -26,6 +32,7 @@
         rm -f /tmp/test.go
       register: go_test
       failed_when: go_test.rc != 0
+      when: install_go_enabled | default(true)
 
     - name: "Check Java toolchain versions"
       command: "{{ item.cmd }}"

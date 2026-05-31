@@ -29,5 +29,10 @@
     - name: Install Rust only
       import_role:
         name: development-runtime
-        tasks_from: rust
+      vars:
+        install_rust_enabled: true
+        install_nodejs_enabled: false
+        install_go_enabled: false
+        install_java_enabled: false
+        install_kotlin_enabled: false
       when: profile_runtime_enabled | default(true)

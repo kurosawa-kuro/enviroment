@@ -6,5 +6,8 @@ java_version: "21"
 kotlin_version: "2.2.10"
 maven_version: "3.9.9"
 gradle_version: "8.12"
+install_rust_enabled: true
+install_nodejs_enabled: true
+install_go_enabled: true
 install_java_enabled: false
 install_kotlin_enabled: false

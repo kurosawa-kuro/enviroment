@@ -19,10 +19,15 @@
       import_role:
         name: base
 
-    - name: Install Node.js subtask for neonctl dependency
+    - name: Install Node.js runtime for neonctl dependency
       import_role:
         name: development-runtime
-        tasks_from: nodejs
+      vars:
+        install_rust_enabled: false
+        install_nodejs_enabled: true
+        install_go_enabled: false
+        install_java_enabled: false
+        install_kotlin_enabled: false
 
     - name: Apply postgresql role
       import_role:

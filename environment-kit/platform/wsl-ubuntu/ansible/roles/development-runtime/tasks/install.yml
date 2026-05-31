@@ -1,0 +1,20 @@
+---
+- name: Install Rust
+  import_tasks: rust.yml
+  when: install_rust_enabled | default(true)
+
+- name: Install Node.js
+  import_tasks: nodejs.yml
+  when: install_nodejs_enabled | default(true)
+
+- name: Install Go
+  import_tasks: golang.yml
+  when: install_go_enabled | default(true)
+
+- name: Install Java toolchain
+  import_tasks: java.yml
+  when: install_java_enabled | default(false)
+
+- name: Install Kotlin toolchain
+  import_tasks: kotlin.yml
+  when: install_kotlin_enabled | default(false)
