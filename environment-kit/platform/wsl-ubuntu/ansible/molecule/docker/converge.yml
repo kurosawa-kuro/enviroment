@@ -9,10 +9,7 @@
     - ../resources/common-vars.yml
   vars:
     base_system_packages:
-      - git
       - curl
-      - wget
-      - jq
       - apt-transport-https
       - gnupg
       - ca-certificates

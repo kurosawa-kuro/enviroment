@@ -9,17 +9,12 @@
     - ../resources/common-vars.yml
   vars:
     base_system_packages:
-      - git
       - curl
-      - wget
-      - jq
-      - unzip
-      - zip
-      - pkg-config
       - apt-transport-https
       - gnupg
       - ca-certificates
       - lsb-release
+      - pkg-config
       - build-essential
   pre_tasks:
     - name: Prepare Ansible working directories
