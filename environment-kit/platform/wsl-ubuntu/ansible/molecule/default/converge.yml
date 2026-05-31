@@ -3,6 +3,9 @@
   hosts: molecule
   become: true
   vars_files:
+    - ../../group_vars/all.yml
+    - ../../group_vars/platform/molecule.yml
+    - ../../group_vars/profiles/ci.yml
     - ../resources/common-vars.yml
   tasks:
     - name: Gather smoke facts

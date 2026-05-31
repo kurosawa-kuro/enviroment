@@ -25,14 +25,18 @@ SUPPORT_DIR := $(ANSIBLE_DIR)/support
 SCRIPT_DIR := $(ROOT_DIR)/script
 MOLECULE_VENV := $(ROOT_DIR)/.venv-molecule
 MOLECULE_BIN := $(MOLECULE_VENV)/bin/molecule
+PROFILE ?= full
+PLATFORM ?= wsl
+RUN_EXTRA_VARS := -e wsl_profile=$(PROFILE) -e execution_platform=$(PLATFORM)
 
 # Ansible設定
-PLAYBOOK := $(PLAYBOOK_DIR)/site.yml
-PLAYBOOK_CUSTOM := $(PLAYBOOK_DIR)/site-selective.yml
-PLAYBOOK_BASE := $(PLAYBOOK_DIR)/site-base.yml
-PLAYBOOK_USER := $(PLAYBOOK_DIR)/site-user.yml
-PLAYBOOK_RUST := $(PLAYBOOK_DIR)/site-rust.yml
-PLAYBOOK_CHECK := $(PLAYBOOK_DIR)/site-check.yml
+PLAYBOOK := $(PLAYBOOK_DIR)/main.yml
+PLAYBOOK_CUSTOM := $(PLAYBOOK_DIR)/compat/site-selective.yml
+PLAYBOOK_BASE := $(PLAYBOOK_DIR)/converge/base.yml
+PLAYBOOK_USER := $(PLAYBOOK_DIR)/converge/user.yml
+PLAYBOOK_RUST := $(PLAYBOOK_DIR)/converge/runtime-rust.yml
+PLAYBOOK_CHECK := $(PLAYBOOK_DIR)/check.yml
+PLAYBOOK_PARALLEL := $(PLAYBOOK_DIR)/compat/site-parallel.yml
 INVENTORY := $(ANSIBLE_DIR)/inventory/hosts
 ANSIBLE_CONFIG := $(ANSIBLE_DIR)/ansible.cfg
 
@@ -63,25 +67,25 @@ setup-ansible:
 # 環境セットアップ（config.ymlの設定に基づく）
 setup:
 	@echo "🎯 環境セットアップを開始します（config.ymlの設定に基づく）..."
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_CUSTOM) -i $(INVENTORY)
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_CUSTOM) -i $(INVENTORY) $(RUN_EXTRA_VARS)
 	@echo "✅ 環境セットアップが完了しました"
 
 # WSL基盤セットアップ
 setup-base:
 	@echo "🧱 WSL基盤セットアップを開始します..."
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_BASE) -i $(INVENTORY)
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_BASE) -i $(INVENTORY) $(RUN_EXTRA_VARS)
 	@echo "✅ WSL基盤セットアップが完了しました"
 
 # ユーザー初期化（opt-in）
 setup-user:
 	@echo "👤 ユーザー初期化を開始します..."
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_USER) -i $(INVENTORY)
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_USER) -i $(INVENTORY) $(RUN_EXTRA_VARS) -e user_bootstrap_requested=true
 	@echo "✅ ユーザー初期化が完了しました"
 
-# Rust単体セットアップ（site-selective.yml の既存不備に影響されない導線）
+# Rust単体セットアップ（compat 導線に依存しない中核 runtime 入口）
 setup-rust:
 	@echo "🦀 Rust単体セットアップを開始します..."
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_RUST) -i $(INVENTORY)
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_RUST) -i $(INVENTORY) $(RUN_EXTRA_VARS)
 	@echo "✅ Rust単体セットアップが完了しました"
 
 # =============================================================================
@@ -96,7 +100,7 @@ version:
 # メインプレイブックの構文チェック
 syntax:
 	@echo "🧪 メインプレイブックの構文チェックを開始します..."
-	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK) -i $(INVENTORY) --syntax-check
+	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK) -i $(INVENTORY) $(RUN_EXTRA_VARS) --syntax-check
 	@echo "=== メインプレイブックの構文チェック完了 ==="
 
 # Ansible静的検査
@@ -113,19 +117,19 @@ test: syntax lint check
 # WSL基盤プレイブックの構文チェック
 test-base:
 	@echo "🧪 WSL基盤プレイブックの構文チェックを開始します..."
-	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_BASE) -i $(INVENTORY) --syntax-check
+	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_BASE) -i $(INVENTORY) $(RUN_EXTRA_VARS) --syntax-check
 	@echo "=== WSL基盤プレイブックの構文チェック完了 ==="
 
 # Rust追加分だけを安全に検証するための構文チェック
 test-rust:
 	@echo "🧪 Rust単体プレイブックの構文チェックを開始します..."
-	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_RUST) -i $(INVENTORY) --syntax-check
+	@ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_RUST) -i $(INVENTORY) $(RUN_EXTRA_VARS) --syntax-check
 	@echo "=== Rust単体プレイブックの構文チェック完了 ==="
 
 # 実行後の状態確認
 check:
 	@echo "🔍 Ansible状態確認を実行します..."
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_CHECK) -i $(INVENTORY)
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook $(PLAYBOOK_CHECK) -i $(INVENTORY) $(RUN_EXTRA_VARS)
 	@echo "✅ Ansible状態確認が完了しました"
 
 # 既存のバージョン確認スクリプト
@@ -208,6 +212,7 @@ help:
 	@echo "  make setup-base          - WSL基盤設定と基本ツールをセットアップ"
 	@echo "  make setup-user          - Git / bashrc / .ssh のユーザー初期化"
 	@echo "  make setup               - config.ymlの設定に基づく環境セットアップ"
+	@echo "  make setup PROFILE=minimal - 最小 profile で環境セットアップ"
 	@echo "  make setup-rust          - Rustのみを個別セットアップ"
 	@echo ""
 	@echo "🧪 テスト・検証:"
@@ -218,6 +223,9 @@ help:
 	@echo "  make test-base           - WSL基盤プレイブックの構文チェック"
 	@echo "  make test-rust           - Rust単体プレイブックの構文チェック"
 	@echo "  make check               - Ansible の状態検証 playbook 実行"
+	@echo "  make setup は互換導線 (compat/site-selective.yml) を実行します"
+	@echo "  make syntax / make check は新しい主入口 (main.yml / check.yml) を使います"
+	@echo "  PROFILE=full|minimal|runtime|ci, PLATFORM=wsl|molecule を extra-vars として渡せます"
 	@echo "  make check-system        - 既存のシステム確認スクリプト実行"
 	@echo "  make molecule-list       - Molecule シナリオ一覧"
 	@echo "  make molecule-test       - Molecule default smoke 実行"

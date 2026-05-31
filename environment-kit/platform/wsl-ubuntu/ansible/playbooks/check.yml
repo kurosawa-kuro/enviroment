@@ -5,8 +5,10 @@
   gather_facts: false
   vars_files:
     - ../group_vars/all.yml
-    - "{{ playbook_dir }}/../../../../env/config/setting.yaml"
-    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
+    - "../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
+    - "../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - "{{ playbook_dir }}/../../../env/config/setting.yaml"
+    - "{{ playbook_dir }}/../../../env/secret/credential.yaml"
 
   vars:
     check_commands:

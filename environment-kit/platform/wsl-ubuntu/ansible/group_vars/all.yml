@@ -5,10 +5,8 @@
 
 ansible_become_password: wsl
 ansible_become_pass: "{{ ansible_become_password }}"
-env_secret_file: "{{ playbook_dir }}/../../../env/secret/credential.yaml"
-
-# Working directories
-download_dir: "/home/ubuntu/.tmp-ansible"
+wsl_profile: "full"
+execution_platform: "wsl"
 
 # ライブラリ・ツール バージョン統一
 python_version: "3.12.6"       # Python latest stable
@@ -114,18 +112,21 @@ docker_postgres_dwh_port: 5435
 # Ansible Galaxy コレクション（実際に使用しているもののみ）
 community_postgresql_version: ">=3.0.0"
 
-# ローカル作業用パス
-local_tmp: "/home/ubuntu/.tmp-ansible"
-remote_tmp: "/home/ubuntu/.tmp-ansible"
-
-log_path: /home/ubuntu/.ansible/ansible.log
 env_setting_file: "{{ playbook_dir }}/../../../env/config/setting.yaml"
 cache_enabled: true
 preload_cache: true
 security_enabled: true
+profile_base_enabled: true
+profile_runtime_enabled: true
+profile_container_enabled: true
+profile_security_enabled: true
+profile_cloud_enabled: true
+profile_data_enabled: true
+profile_user_enabled: true
 
 # ユーザー初期化（opt-in）
 user_bootstrap_enabled: false
+user_bootstrap_requested: false
 git_default_branch: "main"
 git_pull_rebase: "false"
 git_core_autocrlf: "input"

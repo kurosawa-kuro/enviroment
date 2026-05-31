@@ -1,0 +1,3 @@
+---
+- name: Prepare Ansible working directories
+  include_tasks: ../tasks/setup_download_dirs.yml

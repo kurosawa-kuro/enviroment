@@ -1,0 +1,14 @@
+---
+execution_platform: molecule
+download_dir: /tmp/molecule-ansible
+local_tmp: /tmp/molecule-ansible
+remote_tmp: /tmp/molecule-ansible
+log_path: /tmp/molecule-ansible/ansible.log
+default_wsl_user: root
+validate_installation: false
+preload_cache: false
+base_manage_timezone: false
+base_manage_locale: false
+docker_manage_service: false
+postgresql_manage_service: false
+env_setting_file: "{{ playbook_dir }}/../fixtures/setting.yml"

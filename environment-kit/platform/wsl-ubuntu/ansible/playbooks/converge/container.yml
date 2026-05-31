@@ -1,0 +1,23 @@
+---
+- name: Converge container tooling
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - ../../group_vars/all.yml
+    - "../../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
+    - "../../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
+  pre_tasks:
+    - import_tasks: ../../taskfiles/prepare.yml
+
+  tasks:
+    - name: Install Docker
+      import_role:
+        name: docker
+      when: profile_container_enabled | default(true)
+
+    - name: Install Kubernetes tools
+      import_role:
+        name: kubernetes
+      when: profile_container_enabled | default(true)

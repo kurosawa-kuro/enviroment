@@ -1,0 +1,9 @@
+---
+wsl_profile: minimal
+profile_base_enabled: true
+profile_runtime_enabled: false
+profile_container_enabled: false
+profile_security_enabled: false
+profile_cloud_enabled: false
+profile_data_enabled: false
+profile_user_enabled: true

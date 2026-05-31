@@ -1,0 +1,9 @@
+---
+wsl_profile: full
+profile_base_enabled: true
+profile_runtime_enabled: true
+profile_container_enabled: true
+profile_security_enabled: true
+profile_cloud_enabled: true
+profile_data_enabled: true
+profile_user_enabled: true

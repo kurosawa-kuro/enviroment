@@ -21,18 +21,14 @@
 
 ## プレイブック
 
-- `playbooks/site.yml`
-  - フルセットアップ
-- `playbooks/site-selective.yml`
-  - `config.yml` に基づく選択式セットアップ
-- `playbooks/site-base.yml`
-  - WSL 基盤設定のみ
-- `playbooks/site-user.yml`
-  - opt-in のユーザー初期化のみ
-- `playbooks/site-rust.yml`
-  - Rust 専用導線
-- `playbooks/site-check.yml`
-  - 導入済みツールの状態検証
+- `playbooks/main.yml`
+  - フルセットアップの主入口
+- `playbooks/check.yml`
+  - 導入済みツールの状態検証の主入口
+- `playbooks/converge/`
+  - domain ごとの中核導線
+- `playbooks/compat/`
+  - 旧 `site*.yml` 互換導線
 - `molecule/`
   - Docker 一時環境での Molecule シナリオ群
 
@@ -62,7 +58,11 @@
 ## 主要変数
 
 - `group_vars/all.yml`
-  - バージョンや WSL 基盤設定のシングルソース
+  - バージョンや既定値のベースレイヤ
+- `group_vars/profiles/`
+  - `full` / `minimal` / `runtime` / `ci` の profile 上書き
+- `group_vars/platform/`
+  - `wsl` / `molecule` の platform 上書き
 - `config.yml`
   - 選択式セットアップ用の有効 / 無効スイッチ
 - `env/config/setting.yaml`
@@ -83,6 +83,8 @@
 
 ## 補足
 
+- `main.yml` / `check.yml` は `wsl_profile` と `execution_platform` で変数レイヤを切り替えます
+- `Makefile` からは `PROFILE=full|minimal|runtime|ci`、`PLATFORM=wsl|molecule` を渡せます
 - `gcloud` は `latest` を使います
 - Java / Kotlin は既定では入れません
 - ユーザー固有設定は `user-bootstrap` を有効化した場合のみ反映します

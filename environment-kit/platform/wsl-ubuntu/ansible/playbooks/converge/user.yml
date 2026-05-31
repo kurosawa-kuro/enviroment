@@ -1,0 +1,20 @@
+---
+- name: Converge opt-in user bootstrap
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - ../../group_vars/all.yml
+    - "../../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
+    - "../../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
+  pre_tasks:
+    - import_tasks: ../../taskfiles/prepare.yml
+
+  tasks:
+    - name: Apply opt-in user bootstrap
+      import_role:
+        name: user-bootstrap
+      when:
+        - profile_user_enabled | default(true)
+        - user_bootstrap_requested | default(false) or user_bootstrap_enabled | default(false)

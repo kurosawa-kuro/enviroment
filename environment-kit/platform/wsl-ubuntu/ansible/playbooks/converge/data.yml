@@ -1,0 +1,18 @@
+---
+- name: Converge data tooling
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - ../../group_vars/all.yml
+    - "../../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
+    - "../../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
+  pre_tasks:
+    - import_tasks: ../../taskfiles/prepare.yml
+
+  tasks:
+    - name: Setup PostgreSQL database
+      import_role:
+        name: postgresql
+      when: profile_data_enabled | default(true)

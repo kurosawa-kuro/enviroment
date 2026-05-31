@@ -1,0 +1,8 @@
+---
+- import_playbook: converge/base.yml
+- import_playbook: converge/user.yml
+- import_playbook: converge/runtime.yml
+- import_playbook: converge/container.yml
+- import_playbook: converge/security.yml
+- import_playbook: converge/cloud.yml
+- import_playbook: converge/data.yml

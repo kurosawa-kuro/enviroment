@@ -8,7 +8,7 @@ fail() { echo "[ERROR] $*" >&2; exit 1; }
 : "${DOPPLER_TOKEN:?DOPPLER_TOKEN is required}"
 
 REPO_DEST="${REPO_DEST:-/opt/playbook}"
-ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-playbooks/site.yml}"
+ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-playbooks/main.yml}"
 ANSIBLE_INVENTORY="${ANSIBLE_INVENTORY:-localhost,}"
 PKG_MANAGER="${PKG_MANAGER:-}"
 
