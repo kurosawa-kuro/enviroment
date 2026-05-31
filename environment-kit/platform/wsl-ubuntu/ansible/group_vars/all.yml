@@ -4,9 +4,11 @@
 # requirements.yml は make generate-requirements で自動生成される
 
 ansible_become_password: wsl
+ansible_become_pass: "{{ ansible_become_password }}"
+env_secret_file: "{{ playbook_dir }}/../../../env/secret/credential.yaml"
 
 # Working directories
-download_dir: "/home/wsl/.tmp-ansible"
+download_dir: "/home/ubuntu/.tmp-ansible"
 
 # ライブラリ・ツール バージョン統一
 python_version: "3.12.6"       # Python latest stable
@@ -24,7 +26,7 @@ wsl_interop_enabled: true
 wsl_append_windows_path: false
 wsl_automount_root: "/mnt/"
 wsl_automount_options: "metadata,umask=22,fmask=11"
-default_wsl_user: ""
+default_wsl_user: "ubuntu"
 
 # 開発ランタイム
 rust_version: "stable"     # Rust (rustup 経由) / 非MLのメイン言語
@@ -113,10 +115,10 @@ docker_postgres_dwh_port: 5435
 community_postgresql_version: ">=3.0.0"
 
 # ローカル作業用パス
-local_tmp: "/home/wsl/.tmp-ansible"
-remote_tmp: "/home/wsl/.tmp-ansible"
+local_tmp: "/home/ubuntu/.tmp-ansible"
+remote_tmp: "/home/ubuntu/.tmp-ansible"
 
-log_path: /home/wsl/.ansible/ansible.log
+log_path: /home/ubuntu/.ansible/ansible.log
 env_setting_file: "{{ playbook_dir }}/../../../env/config/setting.yaml"
 cache_enabled: true
 preload_cache: true

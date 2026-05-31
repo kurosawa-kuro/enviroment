@@ -58,11 +58,7 @@
 
 # Pre-download commonly used packages
 - name: Pre-download common packages to cache
-  apt:
-    name: "{{ item }}"
-    state: latest
-    download_only: yes
-    update_cache: yes
+  command: "apt-get install --download-only -y {{ item }}"
   loop:
     - curl
     - wget

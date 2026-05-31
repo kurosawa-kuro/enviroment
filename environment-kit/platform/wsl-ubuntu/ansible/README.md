@@ -2,6 +2,8 @@
 
 `platform/wsl-ubuntu/ansible` は、WSL Ubuntu 環境を role 単位でセットアップするための本体です。
 
+現行の仕様・運用・実装の正本は [`docs/wsl-ubuntu-ansible`](../../../docs/wsl-ubuntu-ansible/) 配下です。`ansible/docs/` は背景資料・旧設計アーカイブとして扱います。
+
 ## プレイブック
 
 - `site.yml`
@@ -14,6 +16,8 @@
   - opt-in のユーザー初期化のみ
 - `site-rust.yml`
   - Rust 専用導線
+- `site-check.yml`
+  - 導入済みツールの状態検証
 
 ## role
 

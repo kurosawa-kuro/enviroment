@@ -4,6 +4,7 @@
   gather_facts: yes
   vars_files:
     - config.yml
+    - "{{ playbook_dir }}/../../../env/secret/credential.yaml"
   pre_tasks:
     - name: Prepare Ansible working directories
       include_tasks: tasks/setup_download_dirs.yml
