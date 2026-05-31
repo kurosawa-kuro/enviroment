@@ -20,17 +20,19 @@
 # 基本パス設定
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 ANSIBLE_DIR := $(ROOT_DIR)/ansible
+PLAYBOOK_DIR := $(ANSIBLE_DIR)/playbooks
+SUPPORT_DIR := $(ANSIBLE_DIR)/support
 SCRIPT_DIR := $(ROOT_DIR)/script
 MOLECULE_VENV := $(ROOT_DIR)/.venv-molecule
 MOLECULE_BIN := $(MOLECULE_VENV)/bin/molecule
 
 # Ansible設定
-PLAYBOOK := $(ANSIBLE_DIR)/site.yml
-PLAYBOOK_CUSTOM := $(ANSIBLE_DIR)/site-selective.yml
-PLAYBOOK_BASE := $(ANSIBLE_DIR)/site-base.yml
-PLAYBOOK_USER := $(ANSIBLE_DIR)/site-user.yml
-PLAYBOOK_RUST := $(ANSIBLE_DIR)/site-rust.yml
-PLAYBOOK_CHECK := $(ANSIBLE_DIR)/site-check.yml
+PLAYBOOK := $(PLAYBOOK_DIR)/site.yml
+PLAYBOOK_CUSTOM := $(PLAYBOOK_DIR)/site-selective.yml
+PLAYBOOK_BASE := $(PLAYBOOK_DIR)/site-base.yml
+PLAYBOOK_USER := $(PLAYBOOK_DIR)/site-user.yml
+PLAYBOOK_RUST := $(PLAYBOOK_DIR)/site-rust.yml
+PLAYBOOK_CHECK := $(PLAYBOOK_DIR)/site-check.yml
 INVENTORY := $(ANSIBLE_DIR)/inventory/hosts
 ANSIBLE_CONFIG := $(ANSIBLE_DIR)/ansible.cfg
 
@@ -141,8 +143,8 @@ molecule-install:
 	@echo "🧪 Molecule 環境をセットアップします..."
 	@python3 -m venv $(MOLECULE_VENV)
 	@$(MOLECULE_VENV)/bin/python -m pip install --upgrade pip
-	@$(MOLECULE_VENV)/bin/python -m pip install -r $(ANSIBLE_DIR)/requirements-molecule.txt
-	@PATH="$(MOLECULE_VENV)/bin:$$PATH" ansible-galaxy collection install -r $(ANSIBLE_DIR)/requirements-molecule.yml
+	@$(MOLECULE_VENV)/bin/python -m pip install -r $(ANSIBLE_DIR)/molecule/requirements-molecule.txt
+	@PATH="$(MOLECULE_VENV)/bin:$$PATH" ansible-galaxy collection install -r $(ANSIBLE_DIR)/molecule/requirements-molecule.yml
 	@echo "✅ Molecule 環境のセットアップが完了しました"
 
 # Molecule シナリオ一覧
@@ -178,11 +180,11 @@ cleanup-temp:
 # requirements.ymlの生成
 generate-requirements:
 	@echo "📝 requirements.ymlを生成します..."
-	@if [ ! -f "$(ANSIBLE_DIR)/generate-requirements.yml" ]; then \
-		echo "❌ 生成スクリプトが見つかりません: $(ANSIBLE_DIR)/generate-requirements.yml"; \
+	@if [ ! -f "$(SUPPORT_DIR)/generate-requirements.yml" ]; then \
+		echo "❌ 生成スクリプトが見つかりません: $(SUPPORT_DIR)/generate-requirements.yml"; \
 		exit 1; \
 	fi
-	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook generate-requirements.yml
+	@cd $(ANSIBLE_DIR) && ANSIBLE_CONFIG=$(ANSIBLE_CONFIG) ansible-playbook support/generate-requirements.yml
 	@echo "✅ requirements.ymlの生成が完了しました"
 
 

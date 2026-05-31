@@ -3,10 +3,10 @@
   connection: local
   gather_facts: yes
   vars_files:
-    - "{{ playbook_dir }}/../../../env/secret/credential.yaml"
+    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
   pre_tasks:
     - name: Prepare Ansible working directories
-      include_tasks: tasks/setup_download_dirs.yml
+      include_tasks: ../tasks/setup_download_dirs.yml
 
   tasks:
     - name: Setup local cache system
@@ -14,11 +14,6 @@
         name: cache
       when: cache_enabled | default(true)
 
-    - name: Install base system tools for Rust setup
+    - name: Apply base WSL Ubuntu setup
       import_role:
         name: base
-
-    - name: Install Rust only
-      import_role:
-        name: development-runtime
-        tasks_from: rust

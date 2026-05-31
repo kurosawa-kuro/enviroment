@@ -20,7 +20,7 @@ postgresql:
 
 3. カスタムセットアップを実行:
 ```bash
-ansible-playbook site-selective.yml --ask-become-pass
+ansible-playbook playbooks/site-selective.yml --ask-become-pass
 ```
 
 ## 設定例

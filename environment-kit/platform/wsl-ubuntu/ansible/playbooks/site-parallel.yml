@@ -4,12 +4,12 @@
   connection: local
   gather_facts: yes
   vars_files:
-    - group_vars/all.yml
-    - group_vars/parallel_execution.yml
-    - "{{ playbook_dir }}/../../../env/secret/credential.yaml"
+    - ../group_vars/all.yml
+    - ../group_vars/parallel_execution.yml
+    - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
   pre_tasks:
     - name: Prepare Ansible working directories
-      include_tasks: tasks/setup_download_dirs.yml
+      include_tasks: ../tasks/setup_download_dirs.yml
   
   vars:
     # Track timing and performance

@@ -11,7 +11,7 @@
     - name: Generate requirements.yml from group_vars/all.yml
       template:
         src: requirements.yml.j2
-        dest: requirements.yml
+        dest: ../requirements.yml
         backup: yes
       
     - name: Display generated requirements.yml
