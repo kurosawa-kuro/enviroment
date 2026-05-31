@@ -1,0 +1,21 @@
+---
+dependencies:
+  - role: base
+
+galaxy_info:
+  role_name: security
+  author: WSL Ubuntu Environment Setup
+  description: Security tooling and optional hardening packages
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - security
+    - trivy
+    - kubescape
+    - kube-bench

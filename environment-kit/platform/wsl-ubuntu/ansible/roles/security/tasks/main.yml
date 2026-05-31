@@ -1,0 +1,60 @@
+---
+- name: Install trivy archive
+  get_url:
+    url: "https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_Linux-64bit.tar.gz"
+    dest: "{{ download_dir }}/trivy.tar.gz"
+
+- name: Extract trivy
+  unarchive:
+    src: "{{ download_dir }}/trivy.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/trivy
+  when: not ansible_check_mode
+
+- name: Install kube-bench archive
+  get_url:
+    url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+    dest: "{{ download_dir }}/kube-bench.tar.gz"
+
+- name: Extract kube-bench
+  unarchive:
+    src: "{{ download_dir }}/kube-bench.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/kube-bench
+  when: not ansible_check_mode
+
+- name: Resolve security tool owner
+  set_fact:
+    security_tool_owner: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+- name: Install kube-hunter via pipx
+  command: pipx install kube-hunter=={{ kube_hunter_version }}
+  args:
+    creates: "/home/{{ security_tool_owner }}/.local/bin/kube-hunter"
+  become_user: "{{ security_tool_owner }}"
+  environment:
+    HOME: "/home/{{ security_tool_owner }}"
+
+- name: Install kubescape binary
+  get_url:
+    url: "https://github.com/armosec/kubescape/releases/download/v{{ kubescape_version }}/kubescape-ubuntu-latest"
+    dest: /usr/local/bin/kubescape
+    mode: '0755'
+
+- name: Install auditd package
+  apt:
+    name: auditd
+    state: present
+  when: auditd | default(false)
+
+- name: Install apparmor-utils package
+  apt:
+    name: apparmor-utils
+    state: present
+  when: apparmor_utils | default(false)
+
+- name: Validate security role installation
+  include_tasks: validate.yml
+  when: validate_installation | default(true)

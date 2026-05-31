@@ -50,14 +50,19 @@ kubernetes_version: "1.33.4"
 kubeadm_version: "1.33.4"
 kubelet_version: "1.33.4"
 kubectl_version: "1.33.4"
+kubernetes_install_kube_node_tools: false
+kubernetes_install_kind: true
 
 # 3) ローカルK8s（学習用クラスター）
 kind_version: "0.24.0"
 minikube_version: "1.35.0"
+kubernetes_install_minikube: false
 
 # 4) マニフェスト/パッケージ
 kustomize_version: "5.7.0"
 helm_version: "3.18.4"
+kubernetes_install_kustomize: true
+kubernetes_install_helm: true
 
 # 5) セキュリティ／ポリシー（KSCA/CKS対策）
 trivy_version: "0.54.0"
@@ -66,8 +71,8 @@ kube_hunter_version: "0.6.8"
 kubescape_version: "3.0.0"
 gatekeeper_version: "3.16.0" # OPA Gatekeeper
 kyverno_version: "1.12.0"
-auditd: true
-apparmor_utils: true
+auditd: false
+apparmor_utils: false
 
 # 6) kubectl プラグイン基盤＆操作補助
 krew_version: "0.4.4"
@@ -75,11 +80,13 @@ kubectx_version: "0.9.5"
 kubens_version: "0.9.5"
 k9s_version: "0.32.5"
 stern_version: "1.30.0"
+kubernetes_install_container_runtime_tools: false
+kubernetes_install_kubectl_plugins: false
 
 # 7) CLI ユーティリティ
 jq_version: "1.6"
 yq_version: "4.44.3"
-bash_completion: true
+bash_completion: false
 
 
 # クラウド・インフラ
@@ -110,6 +117,10 @@ local_tmp: "/home/wsl/.tmp-ansible"
 remote_tmp: "/home/wsl/.tmp-ansible"
 
 log_path: /home/wsl/.ansible/ansible.log
+env_setting_file: "{{ playbook_dir }}/../../../env/config/setting.yaml"
+cache_enabled: true
+preload_cache: true
+security_enabled: true
 
 # ユーザー初期化（opt-in）
 user_bootstrap_enabled: false

@@ -6,6 +6,7 @@
 execution_phases:
   phase_1:
     # Foundation phase - must run first
+    - cache
     - base
   
   phase_2:
@@ -23,6 +24,9 @@ execution_phases:
   phase_4:
     # Roles that depend on docker
     - kubernetes
+
+  phase_5:
+    - security
 
 # Parallel execution groups
 parallel_groups:

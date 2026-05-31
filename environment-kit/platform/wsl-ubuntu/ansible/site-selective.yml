@@ -4,11 +4,19 @@
   gather_facts: yes
   vars_files:
     - config.yml
+  pre_tasks:
+    - name: Prepare Ansible working directories
+      include_tasks: tasks/setup_download_dirs.yml
   
   tasks:
     - name: Load configuration
       debug:
         msg: "設定ファイルを読み込みました"
+
+    - name: Setup local cache system
+      import_role:
+        name: cache
+      when: components.cache.enabled | default(true)
     
     - name: Install base system tools
       import_role:
@@ -59,6 +67,11 @@
       import_role:
         name: kubernetes
       when: components.kubernetes.enabled | default(false)
+
+    - name: Install security tools
+      import_role:
+        name: security
+      when: components.security.enabled | default(false)
 
     - name: Install AWS and cloud tools
       import_role:

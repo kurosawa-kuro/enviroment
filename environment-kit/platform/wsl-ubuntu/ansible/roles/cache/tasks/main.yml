@@ -1,12 +1,16 @@
 ---
+- name: Resolve cache owner
+  set_fact:
+    cache_owner: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
 # Local cache setup for performance optimization
 - name: Create cache directory structure
   file:
     path: "{{ item }}"
     state: directory
     mode: '0755'
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ cache_owner }}"
+    group: "{{ cache_owner }}"
   loop:
     - "{{ download_dir }}"
     - "{{ download_dir }}/cache"

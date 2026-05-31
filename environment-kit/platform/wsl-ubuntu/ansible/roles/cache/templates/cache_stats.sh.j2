@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CACHE_DIR="{{ download_dir }}/cache"
+
+if [[ ! -d "${CACHE_DIR}" ]]; then
+  echo "cache directory not found: ${CACHE_DIR}" >&2
+  exit 1
+fi
+
+du -sh "${CACHE_DIR}"
+find "${CACHE_DIR}" -maxdepth 2 -type d | sort

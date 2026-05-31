@@ -19,6 +19,8 @@
 
 - `base`
   - WSL 基盤設定、基本パッケージ、locale、timezone、`/etc/wsl.conf`、uv、Doppler
+- `cache`
+  - ダウンロードキャッシュ、APT キャッシュ、共通作業ディレクトリの事前準備
 - `user-bootstrap`
   - Git / bashrc / `.ssh` の opt-in 初期化
 - `development-runtime`
@@ -26,7 +28,9 @@
 - `docker`
   - Docker Engine
 - `kubernetes`
-  - kubectl、kind、helm など
+  - 既定は kubectl / kind / helm / kustomize の最小構成。node 系や補助ツールは opt-in
+- `security`
+  - trivy、kube-bench、kube-hunter、kubescape、auditd、apparmor-utils
 - `aws`
   - AWS CLI、Terraform、GitHub CLI
 - `gcp`
@@ -40,6 +44,8 @@
   - バージョンや WSL 基盤設定のシングルソース
 - `config.yml`
   - 選択式セットアップ用の有効 / 無効スイッチ
+- `env/config/setting.yaml`
+  - Git の `user.name` / `user.email` / 既定 branch の共有設定
 
 ## ポート方針
 

@@ -3,6 +3,10 @@
 # 必要なコンポーネントのみを有効化してください
 
 components:
+  cache:
+    enabled: true
+    description: "ローカルキャッシュと APT キャッシュ最適化"
+
   # 基本システム（通常は必須）
   base:
     enabled: true
@@ -50,7 +54,11 @@ components:
   
   kubernetes:
     enabled: true
-    description: "Kubernetes ツール (kubectl, helm, etc.)"
+    description: "Kubernetes 最小ツール (kubectl, helm, kind, kustomize)"
+
+  security:
+    enabled: true
+    description: "セキュリティツール (trivy, kube-bench, kube-hunter, kubescape)"
   
   # データベース
   postgresql:

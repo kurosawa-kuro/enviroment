@@ -1,29 +1,32 @@
 ---
-# Kubernetes role validation
 - name: "Validate kubernetes role installation"
   block:
-    - name: "Check Kubernetes core tools"
+    - name: "Check kubectl"
+      command: kubectl version --client
+      register: kubectl_check
+      failed_when: kubectl_check.rc != 0
+
+    - name: "Check Kubernetes node tools"
       command: "{{ item.cmd }}"
-      register: version_check
-      failed_when: version_check.rc != 0
+      register: node_tool_check
+      failed_when: node_tool_check.rc != 0
       loop:
-        - { name: "kubectl", cmd: "kubectl version --client" }
         - { name: "kubeadm", cmd: "kubeadm version" }
         - { name: "kubelet", cmd: "kubelet --version" }
-        - { name: "kind", cmd: "kind version" }
-        - { name: "minikube", cmd: "minikube version" }
-        - { name: "helm", cmd: "helm version" }
-        - { name: "kustomize", cmd: "kustomize version" }
+      when: kubernetes_install_kube_node_tools | default(false)
 
-    - name: "Check Kubernetes security tools"
+    - name: "Check optional cluster tools"
       command: "{{ item.cmd }}"
-      register: security_check
-      failed_when: security_check.rc != 0
+      register: cluster_tool_check
+      failed_when: cluster_tool_check.rc != 0
       loop:
-        - { name: "trivy", cmd: "trivy --version" }
-        - { name: "kube-bench", cmd: "kube-bench version" }
-        - { name: "kube-hunter", cmd: "kube-hunter --version" }
-        - { name: "kubescape", cmd: "kubescape version" }
+        - { name: "kind", cmd: "kind version", enabled: "{{ kubernetes_install_kind | default(true) }}" }
+        - { name: "minikube", cmd: "minikube version", enabled: "{{ kubernetes_install_minikube | default(false) }}" }
+        - { name: "helm", cmd: "helm version", enabled: "{{ kubernetes_install_helm | default(true) }}" }
+        - { name: "kustomize", cmd: "kustomize version", enabled: "{{ kubernetes_install_kustomize | default(true) }}" }
+      when: item.enabled | bool
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: "Check kubectl plugins"
       command: "{{ item.cmd }}"
@@ -34,6 +37,7 @@
         - { name: "kubens", cmd: "kubens --help" }
         - { name: "k9s", cmd: "k9s version" }
         - { name: "stern", cmd: "stern --version" }
+      when: kubernetes_install_kubectl_plugins | default(false)
 
     - name: "Check CLI utilities"
       command: "{{ item.cmd }}"
@@ -51,6 +55,7 @@
       register: kind_test
       failed_when: kind_test.rc != 0
       ignore_errors: yes
+      when: kubernetes_install_kind | default(true)
 
     - name: "Test Helm functionality"
       shell: |
@@ -59,12 +64,13 @@
         helm search repo stable/nginx
       register: helm_test
       failed_when: helm_test.rc != 0
+      when: kubernetes_install_helm | default(true)
 
   rescue:
     - name: "Log validation failure"
       debug:
         msg: "Validation failed for kubernetes role: {{ ansible_failed_result.msg | default('Unknown error') }}"
-    
+
     - name: "Record failed role"
       set_fact:
         failed_roles: "{{ failed_roles | default([]) + ['kubernetes'] }}"

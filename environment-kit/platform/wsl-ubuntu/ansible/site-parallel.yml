@@ -6,6 +6,9 @@
   vars_files:
     - group_vars/all.yml
     - group_vars/parallel_execution.yml
+  pre_tasks:
+    - name: Prepare Ansible working directories
+      include_tasks: tasks/setup_download_dirs.yml
   
   vars:
     # Track timing and performance
@@ -20,6 +23,11 @@
         - name: Record phase 1 start time
           set_fact:
             phase1_start: "{{ ansible_date_time.epoch }}"
+
+        - name: Execute cache role
+          include_role:
+            name: cache
+          when: cache_enabled | default(true)
         
         - name: Execute base role
           include_role:
@@ -28,7 +36,7 @@
         
         - name: Record base role completion
           set_fact:
-            completed_roles: "{{ completed_roles + ['base'] }}"
+            completed_roles: "{{ completed_roles + (['cache'] if (cache_enabled | default(true)) else []) + ['base'] }}"
             phase1_end: "{{ ansible_date_time.epoch }}"
       
       rescue:
@@ -39,43 +47,22 @@
           fail:
             msg: "Base role failed - cannot continue with other roles"
 
-    # Phase 2: Independent roles (parallel execution)
-    - name: "Phase 2: Install independent tools in parallel"
+    # Phase 2: Independent roles batch
+    - name: "Phase 2: Install independent tools"
       block:
         - name: Record phase 2 start time
           set_fact:
             phase2_start: "{{ ansible_date_time.epoch }}"
         
-        - name: Execute independent roles in parallel
+        - name: Execute independent roles
           include_role:
             name: "{{ item }}"
-          async: "{{ parallel_groups.independent_tools.timeout }}"
-          poll: 0
           loop: "{{ parallel_groups.independent_tools.roles }}"
-          register: parallel_jobs_phase2
-        
-        - name: Wait for parallel jobs completion (Phase 2)
-          async_status:
-            jid: "{{ item.ansible_job_id }}"
-          loop: "{{ parallel_jobs_phase2.results }}"
-          register: job_results_phase2
-          until: job_results_phase2.finished
-          retries: 120  # 30 minutes with 15s intervals
-          delay: 15
-          when: item.ansible_job_id is defined
         
         - name: Record phase 2 completion
           set_fact:
             completed_roles: "{{ completed_roles + parallel_groups.independent_tools.roles }}"
             phase2_end: "{{ ansible_date_time.epoch }}"
-        
-        - name: Check for phase 2 failures
-          set_fact:
-            failed_roles: "{{ failed_roles + [item.item] }}"
-          loop: "{{ job_results_phase2.results }}"
-          when: 
-            - item.failed is defined 
-            - item.failed
       
       rescue:
         - name: Handle phase 2 failures
@@ -133,6 +120,30 @@
       
       when: "'docker' in completed_roles"
 
+    # Phase 5: Security tools
+    - name: "Phase 5: Install security tools"
+      block:
+        - name: Record phase 5 start time
+          set_fact:
+            phase5_start: "{{ ansible_date_time.epoch }}"
+
+        - name: Execute security role
+          include_role:
+            name: security
+          register: security_result
+          when: security_enabled | default(true)
+
+        - name: Record security role completion
+          set_fact:
+            completed_roles: "{{ completed_roles + ['security'] }}"
+            phase5_end: "{{ ansible_date_time.epoch }}"
+          when: security_enabled | default(true)
+
+      rescue:
+        - name: Handle security role failure
+          set_fact:
+            failed_roles: "{{ failed_roles + ['security'] }}"
+
     # Performance summary and reporting
     - name: "Generate performance report"
       block:
@@ -143,6 +154,7 @@
             phase2_time: "{{ phase2_end | int - phase2_start | int }}"
             phase3_time: "{{ phase3_end | int - phase3_start | int }}"
             phase4_time: "{{ phase4_end | int - phase4_start | int }}"
+            phase5_time: "{{ (phase5_end | default(ansible_date_time.epoch)) | int - (phase5_start | default(ansible_date_time.epoch)) | int }}"
         
         - name: Display performance summary
           debug:
@@ -156,11 +168,12 @@
               Phase 2 (Parallel): {{ phase2_time }} seconds 
               Phase 3 (Docker): {{ phase3_time }} seconds
               Phase 4 (Kubernetes): {{ phase4_time }} seconds
+              Phase 5 (Security): {{ phase5_time }} seconds
               
               Completed roles: {{ completed_roles | join(', ') }}
               Failed roles: {{ failed_roles | join(', ') | default('None') }}
               
-              Success rate: {{ ((completed_roles | length) / 6 * 100) | round(1) }}%
+              Success rate: {{ ((completed_roles | length) / 8 * 100) | round(1) }}%
               =================================
         
         - name: Save performance report
@@ -173,9 +186,10 @@
               Phase 2 Time: {{ phase2_time }} seconds  
               Phase 3 Time: {{ phase3_time }} seconds
               Phase 4 Time: {{ phase4_time }} seconds
+              Phase 5 Time: {{ phase5_time }} seconds
               Completed Roles: {{ completed_roles | join(', ') }}
               Failed Roles: {{ failed_roles | join(', ') | default('None') }}
-              Success Rate: {{ ((completed_roles | length) / 6 * 100) | round(1) }}%
+              Success Rate: {{ ((completed_roles | length) / 8 * 100) | round(1) }}%
             dest: "{{ log_path | dirname }}/parallel_execution_report.txt"
             mode: '0644'
       

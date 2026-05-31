@@ -1,4 +1,16 @@
 ---
+- name: Load shared environment settings
+  include_vars:
+    file: "{{ env_setting_file }}"
+    name: env_settings
+  failed_when: false
+
+- name: Resolve git bootstrap settings from shared configuration
+  set_fact:
+    git_default_branch_effective: "{{ env_settings.github_default_branch | default(git_default_branch) }}"
+    git_user_name_effective: "{{ env_settings.git_user_name | default(git_user_name) }}"
+    git_user_email_effective: "{{ env_settings.git_user_email | default(git_user_email) }}"
+
 - name: Resolve bootstrap target user
   set_fact:
     bootstrap_target_user: >-
@@ -43,7 +55,7 @@
     HOME: "{{ bootstrap_target_home }}"
 
 - name: Configure global git default branch
-  command: git config --global init.defaultBranch "{{ git_default_branch }}"
+  command: git config --global init.defaultBranch "{{ git_default_branch_effective }}"
   changed_when: false
   become_user: "{{ bootstrap_target_user }}"
   environment:
@@ -71,20 +83,20 @@
     HOME: "{{ bootstrap_target_home }}"
 
 - name: Configure global git user.name when provided
-  command: git config --global user.name "{{ git_user_name }}"
+  command: git config --global user.name "{{ git_user_name_effective }}"
   changed_when: false
   become_user: "{{ bootstrap_target_user }}"
   environment:
     HOME: "{{ bootstrap_target_home }}"
-  when: git_user_name | default('') | length > 0
+  when: git_user_name_effective | default('') | length > 0
 
 - name: Configure global git user.email when provided
-  command: git config --global user.email "{{ git_user_email }}"
+  command: git config --global user.email "{{ git_user_email_effective }}"
   changed_when: false
   become_user: "{{ bootstrap_target_user }}"
   environment:
     HOME: "{{ bootstrap_target_home }}"
-  when: git_user_email | default('') | length > 0
+  when: git_user_email_effective | default('') | length > 0
 
 - name: Manage minimal ~/.bashrc block
   blockinfile:

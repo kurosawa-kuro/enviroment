@@ -2,7 +2,15 @@
 - hosts: localhost
   connection: local
   gather_facts: yes
+  pre_tasks:
+    - name: Prepare Ansible working directories
+      include_tasks: tasks/setup_download_dirs.yml
   tasks:
+    - name: Setup local cache system
+      import_role:
+        name: cache
+      when: cache_enabled | default(true)
+
     - name: Install base system tools
       import_role:
         name: base
@@ -23,6 +31,11 @@
     - name: Install Kubernetes tools
       import_role:
         name: kubernetes
+
+    - name: Install security tools
+      import_role:
+        name: security
+      when: security_enabled | default(true)
 
     - name: Install AWS and cloud tools
       import_role:

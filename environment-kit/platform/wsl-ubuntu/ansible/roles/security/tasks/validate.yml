@@ -1,0 +1,36 @@
+---
+- name: "Validate security role installation"
+  block:
+    - name: "Check security tools"
+      command: "{{ item.cmd }}"
+      register: security_check
+      failed_when: security_check.rc != 0
+      loop:
+        - { name: "trivy", cmd: "trivy --version" }
+        - { name: "kube-bench", cmd: "kube-bench version" }
+        - { name: "kube-hunter", cmd: "kube-hunter --version" }
+        - { name: "kubescape", cmd: "kubescape version" }
+
+    - name: "Check optional security packages"
+      command: "{{ item.cmd }}"
+      register: security_pkg_check
+      failed_when: security_pkg_check.rc != 0
+      loop:
+        - { name: "auditd", cmd: "auditctl -s", enabled: "{{ auditd | default(false) }}" }
+        - { name: "apparmor-utils", cmd: "aa-status", enabled: "{{ apparmor_utils | default(false) }}" }
+      when: item.enabled | bool
+      loop_control:
+        label: "{{ item.name }}"
+
+  rescue:
+    - name: "Log validation failure"
+      debug:
+        msg: "Validation failed for security role: {{ ansible_failed_result.msg | default('Unknown error') }}"
+
+    - name: "Record failed role"
+      set_fact:
+        failed_roles: "{{ failed_roles | default([]) + ['security'] }}"
+
+- name: "Security role validation completed successfully"
+  debug:
+    msg: "All security components validated successfully"
