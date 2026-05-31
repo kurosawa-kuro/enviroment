@@ -1,0 +1,12 @@
+---
+python_version: "3.12.6"
+python_pipx_version: "1.8.0"
+python_uv_enabled: true
+doppler_version: "3.70.0"
+git_version: "system"
+curl_version: "system"
+wget_version: "system"
+tree_version: "system"
+openssh_version: "system"
+cache_enabled: true
+preload_cache: true

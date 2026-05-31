@@ -1,0 +1,14 @@
+---
+postgres_version: "15"
+neonctl_version: "latest"
+postgres_port: 5432
+postgres_user: "postgres"
+postgres_password: "postgres"
+postgres_db_local: "local_dev"
+postgres_db_test: "local_test"
+postgres_db_encoding: "UTF8"
+postgres_extensions: "postgis,pgcrypto,uuid-ossp"
+docker_postgres_dev_port: 5433
+docker_postgres_test_port: 5434
+docker_postgres_dwh_port: 5435
+community_postgresql_version: ">=3.0.0"

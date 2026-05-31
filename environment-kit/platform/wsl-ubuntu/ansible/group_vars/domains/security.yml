@@ -1,0 +1,10 @@
+---
+trivy_version: "0.54.0"
+kube_bench_version: "0.8.0"
+kube_hunter_version: "0.6.8"
+kubescape_version: "3.0.0"
+gatekeeper_version: "3.16.0"
+kyverno_version: "1.12.0"
+auditd: false
+apparmor_utils: false
+security_enabled: true

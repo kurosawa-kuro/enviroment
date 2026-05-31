@@ -63,6 +63,8 @@
   - `full` / `minimal` / `runtime` / `ci` の profile 上書き
 - `group_vars/platform/`
   - `wsl` / `molecule` の platform 上書き
+- `group_vars/domains/`
+  - `core` / `runtime` / `container` / `security` / `cloud` / `data` / `user` の domain 別変数
 - `config.yml`
   - 選択式セットアップ用の有効 / 無効スイッチ
 - `env/config/setting.yaml`

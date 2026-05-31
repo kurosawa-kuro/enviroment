@@ -7,6 +7,7 @@
     - ../../group_vars/all.yml
     - "../../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
     - "../../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - ../../group_vars/domains/container.yml
     - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
   pre_tasks:
     - import_tasks: ../../taskfiles/prepare.yml

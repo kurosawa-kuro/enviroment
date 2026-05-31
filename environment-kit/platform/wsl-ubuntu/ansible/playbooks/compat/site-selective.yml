@@ -6,6 +6,13 @@
     - ../../group_vars/all.yml
     - "../../group_vars/platform/{{ execution_platform | default('wsl') }}.yml"
     - "../../group_vars/profiles/{{ wsl_profile | default('full') }}.yml"
+    - ../../group_vars/domains/core.yml
+    - ../../group_vars/domains/runtime.yml
+    - ../../group_vars/domains/container.yml
+    - ../../group_vars/domains/security.yml
+    - ../../group_vars/domains/cloud.yml
+    - ../../group_vars/domains/data.yml
+    - ../../group_vars/domains/user.yml
     - ../../config.yml
     - "{{ playbook_dir }}/../../../../../env/secret/credential.yaml"
   pre_tasks:

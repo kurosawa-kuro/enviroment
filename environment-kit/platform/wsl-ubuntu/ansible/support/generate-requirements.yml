@@ -8,6 +8,7 @@
   gather_facts: no
   vars_files:
     - ../group_vars/all.yml
+    - ../group_vars/domains/data.yml
   
   tasks:
     - name: Generate requirements.yml from group_vars/all.yml
