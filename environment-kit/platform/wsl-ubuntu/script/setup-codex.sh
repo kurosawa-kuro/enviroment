@@ -56,18 +56,16 @@ install_nodejs() {
   log_done "node: $(node -v)  npm: $(npm -v)  ($(which node))"
 }
 
-# ── Claude Code ────────────────────────────────────────────────────────────────
-install_claude_code() {
-  log_step "既存の Claude Code を削除"
-  npm uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
-  npm uninstall -g claude-code 2>/dev/null || true
+# ── Codex ─────────────────────────────────────────────────────────────────────
+install_codex() {
+  log_step "既存の Codex を削除"
+  npm uninstall -g @openai/codex 2>/dev/null || true
 
-  log_step "Claude Code をインストール"
-  npm install -g @anthropic-ai/claude-code
+  log_step "Codex をインストール"
+  npm install -g @openai/codex
 
   hash -r
-  log_done "claude: $(claude --version)  ($(which claude))"
-  claude doctor || true
+  log_done "codex: $(codex --version)  ($(which codex))"
 }
 
 # ── メイン ─────────────────────────────────────────────────────────────────────
@@ -76,7 +74,7 @@ main() {
   setup_wsl_conf
   install_base_tools
   install_nodejs
-  install_claude_code
+  install_codex
 
   echo ""
   echo "✅ 完了"
