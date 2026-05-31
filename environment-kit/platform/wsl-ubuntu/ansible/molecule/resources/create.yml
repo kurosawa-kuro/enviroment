@@ -9,6 +9,18 @@
         children:
           molecule:
             hosts: {}
+    scenario_name: "{{ lookup('env', 'MOLECULE_SCENARIO_NAME') }}"
+    scenario_file: >-
+      {{
+        lookup('env', 'MOLECULE_FILE')
+        or (
+          lookup('env', 'MOLECULE_PROJECT_DIRECTORY')
+          ~ '/molecule/'
+          ~ scenario_name
+          ~ '/molecule.yml'
+        )
+      }}
+    scenario_yml: "{{ lookup('file', scenario_file) | from_yaml }}"
 
   tasks:
     - name: Remove stale scenario containers
@@ -21,7 +33,23 @@
       register: remove_result
       failed_when: remove_result.rc not in [0, 1]
       changed_when: remove_result.rc == 0
-      loop: "{{ molecule_yml.platforms }}"
+      loop: "{{ scenario_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Wait for stale container removal
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - "{{ item.name }}"
+      register: removal_wait
+      failed_when: false
+      changed_when: false
+      until: removal_wait.rc != 0
+      retries: 10
+      delay: 1
+      loop: "{{ scenario_yml.platforms }}"
       loop_control:
         label: "{{ item.name }}"
 
@@ -41,7 +69,7 @@
         executable: /bin/bash
       register: container_result
       changed_when: true
-      loop: "{{ molecule_yml.platforms }}"
+      loop: "{{ scenario_yml.platforms }}"
       loop_control:
         label: "{{ item.name }}"
 
@@ -55,7 +83,7 @@
           - "{{ item.name }}"
       register: inspect_result
       changed_when: false
-      loop: "{{ molecule_yml.platforms }}"
+      loop: "{{ scenario_yml.platforms }}"
       loop_control:
         label: "{{ item.name }}"
 
@@ -91,7 +119,7 @@
               recursive=True
             )
           }}
-      loop: "{{ molecule_yml.platforms }}"
+      loop: "{{ scenario_yml.platforms }}"
       loop_control:
         label: "{{ item.name }}"
 

@@ -3,6 +3,19 @@
   hosts: localhost
   gather_facts: false
   become: false
+  vars:
+    scenario_name: "{{ lookup('env', 'MOLECULE_SCENARIO_NAME') }}"
+    scenario_file: >-
+      {{
+        lookup('env', 'MOLECULE_FILE')
+        or (
+          lookup('env', 'MOLECULE_PROJECT_DIRECTORY')
+          ~ '/molecule/'
+          ~ scenario_name
+          ~ '/molecule.yml'
+        )
+      }}
+    scenario_yml: "{{ lookup('file', scenario_file) | from_yaml }}"
   tasks:
     - name: Stop and remove scenario containers
       ansible.builtin.command:
@@ -14,7 +27,7 @@
       register: destroy_result
       failed_when: destroy_result.rc not in [0, 1]
       changed_when: destroy_result.rc == 0
-      loop: "{{ molecule_yml.platforms }}"
+      loop: "{{ scenario_yml.platforms }}"
       loop_control:
         label: "{{ item.name }}"
 

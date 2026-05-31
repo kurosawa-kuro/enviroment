@@ -1,6 +1,6 @@
 ---
 - name: Verify runtime scenario
-  hosts: molecule
+  hosts: all
   gather_facts: false
   tasks:
     - name: Check runtime commands

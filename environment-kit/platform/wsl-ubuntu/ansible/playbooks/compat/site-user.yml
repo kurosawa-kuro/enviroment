@@ -1,2 +1,3 @@
 ---
+# Deprecated compatibility shim. Prefer ../converge/user.yml.
 - import_playbook: ../converge/user.yml

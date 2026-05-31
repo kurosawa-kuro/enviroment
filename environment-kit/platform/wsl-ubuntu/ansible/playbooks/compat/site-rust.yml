@@ -1,2 +1,3 @@
 ---
+# Deprecated compatibility shim. Prefer ../converge/runtime-rust.yml.
 - import_playbook: ../converge/runtime-rust.yml

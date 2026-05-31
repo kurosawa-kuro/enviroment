@@ -7,31 +7,7 @@
 # Install WSL base system packages
 - name: Install WSL base system packages
   apt:
-    name:
-      - language-pack-ja
-      - python3
-      - python3-pip
-      - git
-      - curl
-      - wget
-      - tree
-      - jq
-      - htop
-      - lsof
-      - make
-      - unzip
-      - zip
-      - net-tools
-      - dnsutils
-      - iproute2
-      - pkg-config
-      - openssh-server
-      - build-essential
-      - software-properties-common
-      - apt-transport-https
-      - ca-certificates
-      - gnupg
-      - lsb-release
+    name: "{{ base_system_packages }}"
     state: present
 
 # Install Python pipx via system package manager
@@ -39,6 +15,7 @@
   apt:
     name: pipx
     state: present
+  when: base_install_pipx | default(true)
 
 - name: Install uv
   shell: |
@@ -46,7 +23,9 @@
   args:
     creates: /usr/local/bin/uv
     executable: /bin/bash
-  when: python_uv_enabled | default(true)
+  when:
+    - base_install_pipx | default(true)
+    - python_uv_enabled | default(true)
 
 - name: Check current timezone
   command: timedatectl show --property=Timezone --value
@@ -83,6 +62,7 @@
   get_url:
     url: "https://github.com/DopplerHQ/cli/releases/download/{{ doppler_version }}/doppler_{{ doppler_version }}_linux_amd64.tar.gz"
     dest: "{{ download_dir }}/doppler.tar.gz"
+  when: base_install_doppler | default(true)
 
 - name: Extract and install Doppler CLI
   unarchive:
@@ -90,6 +70,7 @@
     dest: /usr/local/bin
     remote_src: yes
     creates: /usr/local/bin/doppler
+  when: base_install_doppler | default(true)
 
 # Validate base role installation
 - name: Validate base role installation

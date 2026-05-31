@@ -7,6 +7,25 @@ log_path: /tmp/molecule-ansible/ansible.log
 default_wsl_user: root
 validate_installation: false
 preload_cache: false
+base_install_pipx: false
+python_uv_enabled: false
+base_system_packages:
+  - python3
+  - python3-pip
+  - git
+  - curl
+  - wget
+  - jq
+  - make
+  - unzip
+  - zip
+  - pkg-config
+  - build-essential
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+base_install_doppler: false
 base_manage_timezone: false
 base_manage_locale: false
 docker_manage_service: false

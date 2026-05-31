@@ -1,6 +1,6 @@
 ---
 - name: Verify docker scenario
-  hosts: molecule
+  hosts: all
   gather_facts: false
   tasks:
     - name: Check docker package commands

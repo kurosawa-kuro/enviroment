@@ -1,20 +1,26 @@
 ---
 - name: Converge docker scenario
-  hosts: molecule
+  hosts: all
   become: true
   vars_files:
     - ../../group_vars/all.yml
     - ../../group_vars/platform/molecule.yml
     - ../../group_vars/profiles/ci.yml
     - ../resources/common-vars.yml
+  vars:
+    base_system_packages:
+      - git
+      - curl
+      - wget
+      - jq
+      - apt-transport-https
+      - gnupg
+      - ca-certificates
+      - lsb-release
   pre_tasks:
     - name: Prepare Ansible working directories
       include_tasks: ../../tasks/setup_download_dirs.yml
   tasks:
-    - name: Apply cache role
-      import_role:
-        name: cache
-
     - name: Apply base role
       import_role:
         name: base

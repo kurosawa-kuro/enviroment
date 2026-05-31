@@ -1,2 +1,3 @@
 ---
+# Deprecated compatibility shim. Prefer ../check.yml.
 - import_playbook: ../check.yml
