@@ -4,17 +4,17 @@
 
 ## ディレクトリ構成
 
-- [`enviroment/`](./enviroment/)
+- [`environment-kit/`](./environment-kit/)
   - WSL Ubuntu、EC2 Ubuntu、Amazon Linux 向けの環境構築資産
-- [`starter/`](./starter/)
+- [`starter-kit/`](./starter-kit/)
   - 新規プロジェクト作成に使うスターターキット集
 
 ## 使い分け
 
 - ローカル環境、Ansible、Docker、クラウド CLI、PostgreSQL、user-data まわりを触るとき
-  - [`enviroment/README.md`](./enviroment/README.md)
+  - [`environment-kit/README.md`](./environment-kit/README.md)
 - 雛形、テンプレート、project generator、技術スターターを触るとき
-  - [`starter/README.md`](./starter/README.md)
+  - [`starter-kit/README.md`](./starter-kit/README.md)
 
 ## 補足
 

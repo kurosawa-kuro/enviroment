@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# UserDataスクリプト
+# EC2 起動時に自動的に実行される
+set -euo pipefail
+
+# 全出力を /var/log/userdata.log にリダイレクト
+exec > /var/log/userdata.log 2>&1
+
+echo "=== Step 1: 必要パッケージインストール ==="
+if ! yum install -y git; then
+  echo "❌ git インストールに失敗しました。処理を中断します。"
+  exit 1
+fi
+echo "✔ git インストール完了"
+
+echo "=== Step 2: ec2-user でのセットアップ ==="
+sudo -i -u ec2-user bash << 'EOF'
+
+echo "=== (ec2-user) SSH設定: ディレクトリ作成 ==="
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+echo "=== (ec2-user) SSH鍵の配置 ==="
+echo "既存の ~/.ssh/id_rsa または deploy key を事前に安全な方法で配置してください。"
+if [ ! -f ~/.ssh/id_rsa ]; then
+  echo "❌ ~/.ssh/id_rsa が存在しません。安全な鍵配布手順を別途実施してください。"
+  exit 1
+fi
+chmod 600 ~/.ssh/id_rsa
+
+echo "=== (ec2-user) AWS認証情報を設定します ==="
+mkdir -p ~/.aws
+chmod 700 ~/.aws
+
+echo "既存の ~/.aws/credentials と ~/.aws/config を使用します。"
+if [ ! -f ~/.aws/credentials ] || [ ! -f ~/.aws/config ]; then
+  echo "❌ AWS認証情報が存在しません。安全な方法で事前に配置してください。"
+  exit 1
+fi
+chmod 600 ~/.aws/credentials ~/.aws/config
+
+echo "=== (ec2-user) known_hosts 登録 ==="
+if ! ssh-keyscan github.com >> ~/.ssh/known_hosts; then
+  echo "❌ ssh-keyscan に失敗しました。"
+  exit 1
+fi
+chmod 644 ~/.ssh/known_hosts
+
+echo "=== (ec2-user) Git ユーザー情報の設定 ==="
+if ! git config --global user.name "YOUR_NAME"; then
+  echo "❌ git config (user.name) に失敗しました。"
+  exit 1
+fi
+if ! git config --global user.email "your-email@example.com"; then
+  echo "❌ git config (user.email) に失敗しました。"
+  exit 1
+fi
+
+echo "=== (ec2-user) リポジトリクローン & セットアップスクリプト実行 ==="
+mkdir -p ~/dev
+cd ~/dev
+
+if ! git clone git@github.com:YOUR_GITHUB_ACCOUNT/private-kit.git; then
+  echo "❌ git clone に失敗しました。処理を中断します。"
+  exit 1
+fi
+echo "✔ リポジトリのクローン完了"
+
+cd environment-kit/script
+
+# セットアップスクリプトの実行
+if ! sudo bash setup-amazon-linux-2023-web.sh; then
+  echo "❌ setup-amazon-linux-2023-web.sh 実行に失敗しました。"
+  exit 1
+fi
+
+mkdir -p ~/app
+echo "=== (ec2-user) セットアップ完了 ==="
+
+EOF
+
+echo "=== ユーザーデータ処理が完了しました ==="
+
+# cat /var/log/userdata.log
+# tail -f /var/log/userdata.log
+# ./dev/private-kit/script/check-versions.sh

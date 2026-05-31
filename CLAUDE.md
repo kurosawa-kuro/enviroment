@@ -6,9 +6,9 @@ This file provides guidance when working in `/home/ubuntu/repos/private-kit`.
 
 `private-kit` is a parent workspace that groups two different assets side by side:
 
-- `enviroment/`
+- `environment-kit/`
   - Environment setup assets for WSL Ubuntu, EC2 Ubuntu, and Amazon Linux
-- `starter/`
+- `starter-kit/`
   - Reusable starter kits for new projects
 
 This root directory is not the canonical implementation home for either area. Treat it as an entrypoint and navigation layer.
@@ -17,8 +17,8 @@ This root directory is not the canonical implementation home for either area. Tr
 
 1. Decide which subtree you are changing first.
 2. Read that subtree's local guides before editing:
-   - `enviroment/README.md`, `enviroment/AGENTS.md`, `enviroment/CLAUDE.md`
-   - `starter/README.md`, `starter/AGENTS.md`, `starter/CLAUDE.md`
+   - `environment-kit/README.md`, `environment-kit/AGENTS.md`, `environment-kit/CLAUDE.md`
+   - `starter-kit/README.md`, `starter-kit/AGENTS.md`, `starter-kit/CLAUDE.md`
 3. Keep root-level docs short and structural.
 4. When cross-linking the two areas, update both sides if paths or naming change.
 
@@ -30,7 +30,7 @@ private-kit/
 ├── CLAUDE.md
 ├── README.md
 ├── .gitignore
-├── enviroment/
+├── environment-kit/
 │   ├── README.md
 │   ├── AGENTS.md
 │   ├── CLAUDE.md
@@ -38,7 +38,7 @@ private-kit/
 │   ├── env/
 │   ├── platform/
 │   └── script/
-└── starter/
+└── starter-kit/
     ├── README.md
     ├── AGENTS.md
     ├── CLAUDE.md
@@ -51,12 +51,12 @@ private-kit/
 
 ## Root-Level Rules
 
-- Do not describe `enviroment/` as if it were the whole repository.
-- Do not describe `starter/` as if it were the whole repository.
+- Do not describe `environment-kit/` as if it were the whole repository.
+- Do not describe `starter-kit/` as if it were the whole repository.
 - Keep secrets, tokens, and personal local settings out of version control.
 - Prefer updating the nearest local documentation rather than expanding this root file.
 
 ## Notes
 
-- `enviroment/` and `starter/` have different goals and different local conventions.
+- `environment-kit/` and `starter-kit/` have different goals and different local conventions.
 - If guidance conflicts, the more local document should usually win.
