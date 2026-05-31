@@ -1,11 +1,13 @@
 ---
 # Playbook to generate requirements.yml from template
-# Usage: ansible-playbook generate-requirements.yml
+# Usage: ansible-playbook support/generate-requirements.yml
 
 - name: Generate requirements.yml from template
   hosts: localhost
   connection: local
   gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
   
   tasks:
     - name: Generate requirements.yml from group_vars/all.yml

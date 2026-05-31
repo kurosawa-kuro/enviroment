@@ -8,7 +8,7 @@ fail() { echo "[ERROR] $*" >&2; exit 1; }
 : "${DOPPLER_TOKEN:?DOPPLER_TOKEN is required}"
 
 REPO_DEST="${REPO_DEST:-/opt/playbook}"
-ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-site.yml}"
+ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-playbooks/site.yml}"
 ANSIBLE_INVENTORY="${ANSIBLE_INVENTORY:-localhost,}"
 PKG_MANAGER="${PKG_MANAGER:-}"
 
@@ -91,6 +91,14 @@ if ! command -v ansible >/dev/null; then
 fi
 
 # --- 5) Playbook 実行 ---
+if [[ ! -f "$REPO_DEST/$ANSIBLE_PLAYBOOK" && -f "$REPO_DEST/ansible/playbooks/$ANSIBLE_PLAYBOOK" ]]; then
+  ANSIBLE_PLAYBOOK="ansible/playbooks/$ANSIBLE_PLAYBOOK"
+fi
+
+if [[ ! -f "$REPO_DEST/$ANSIBLE_PLAYBOOK" && -f "$REPO_DEST/ansible/$ANSIBLE_PLAYBOOK" ]]; then
+  ANSIBLE_PLAYBOOK="ansible/$ANSIBLE_PLAYBOOK"
+fi
+
 log "Running Ansible Playbook: $ANSIBLE_PLAYBOOK"
 cd "$REPO_DEST"
 doppler run -- ansible-playbook -i "$ANSIBLE_INVENTORY" -c local "$ANSIBLE_PLAYBOOK"

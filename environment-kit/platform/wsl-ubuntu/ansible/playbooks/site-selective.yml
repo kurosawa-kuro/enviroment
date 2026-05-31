@@ -3,6 +3,7 @@
   connection: local
   gather_facts: yes
   vars_files:
+    - ../group_vars/all.yml
     - ../config.yml
     - "{{ playbook_dir }}/../../../../env/secret/credential.yaml"
   pre_tasks:

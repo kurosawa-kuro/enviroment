@@ -4,19 +4,34 @@
 
 現行の仕様・運用・実装の正本は [`docs/wsl-ubuntu-ansible`](../../../docs/wsl-ubuntu-ansible/) 配下です。`ansible/docs/` は背景資料・旧設計アーカイブとして扱います。
 
+## レイアウト
+
+- `playbooks/`
+  - 本体の入口 playbook 群
+- `roles/` / `group_vars/` / `tasks/` / `inventory/`
+  - 本番導線の中核
+- `molecule/`
+  - テスト scenario と Molecule 依存
+- `support/`
+  - 生成補助 playbook、テンプレート、補助ドキュメント
+- `docs/`
+  - 背景資料・旧設計アーカイブ
+
+トップ直下には、実行時に常に使う `ansible.cfg` / `config.yml` / `requirements.yml` だけを残し、それ以外は責務別ディレクトリへ寄せる。
+
 ## プレイブック
 
-- `site.yml`
+- `playbooks/site.yml`
   - フルセットアップ
-- `site-selective.yml`
+- `playbooks/site-selective.yml`
   - `config.yml` に基づく選択式セットアップ
-- `site-base.yml`
+- `playbooks/site-base.yml`
   - WSL 基盤設定のみ
-- `site-user.yml`
+- `playbooks/site-user.yml`
   - opt-in のユーザー初期化のみ
-- `site-rust.yml`
+- `playbooks/site-rust.yml`
   - Rust 専用導線
-- `site-check.yml`
+- `playbooks/site-check.yml`
   - 導入済みツールの状態検証
 - `molecule/`
   - Docker 一時環境での Molecule シナリオ群
@@ -52,8 +67,10 @@
   - 選択式セットアップ用の有効 / 無効スイッチ
 - `env/config/setting.yaml`
   - Git の `user.name` / `user.email` / 既定 branch の共有設定
-- `requirements-molecule.txt` / `requirements-molecule.yml`
+- `molecule/requirements-molecule.txt` / `molecule/requirements-molecule.yml`
   - Molecule 実行に必要な Python 依存と Ansible collection
+- `support/generate-requirements.yml`
+  - `requirements.yml` の生成補助 playbook
 
 ## ポート方針
 

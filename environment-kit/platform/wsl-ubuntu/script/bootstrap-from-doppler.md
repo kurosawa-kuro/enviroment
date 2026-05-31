@@ -14,7 +14,7 @@
   4. **機密の安全な注入**（`doppler run -- <cmd>`）
   5. Playbookリポジトリの**Git Clone（SSH or HTTPS）**
   6. Ansibleインストール
-  7. Ansible Playbook実行（`site.yml` など）
+  7. Ansible Playbook実行（`playbooks/site.yml` など）
 
 * **ハイブリッド対応**：
 
@@ -48,7 +48,7 @@
 | `INTERNAL_GIT_SSH_PRIVATE_KEY` | 任意 | GitHub SSHクローンに使う秘密鍵 | OpenSSH形式 |
 | `DEPLOY_KEY_PRIVATE` | 任意       | SSHクローンする場合の旧互換秘密鍵            | OpenSSH形式                         |
 | `DEPLOY_KEY_PUBLIC`  | 任意       | 同上（公開鍵）                          | `ssh-ed25519 ...`                 |
-| `ANSIBLE_PLAYBOOK`   | 任意       | 実行するPlaybookパス                   | `site.yml`                        |
+| `ANSIBLE_PLAYBOOK`   | 任意       | 実行するPlaybookパス                   | `playbooks/site.yml`              |
 | `ANSIBLE_INVENTORY`  | 任意       | インベントリ指定                         | `"localhost,"`（ローカル）              |
 | `PKG_MANAGER`        | 任意       | 強制指定（`apt`/`dnf`/`yum`）          | `apt`                             |
 
@@ -184,7 +184,7 @@ fail() { echo "[ERROR] $*" >&2; exit 1; }
 : "${DOPPLER_TOKEN:?DOPPLER_TOKEN is required}"
 
 REPO_DEST="${REPO_DEST:-/opt/playbook}"
-ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-site.yml}"
+ANSIBLE_PLAYBOOK="${ANSIBLE_PLAYBOOK:-playbooks/site.yml}"
 ANSIBLE_INVENTORY="${ANSIBLE_INVENTORY:-localhost,}"
 PKG_MANAGER="${PKG_MANAGER:-}"
 

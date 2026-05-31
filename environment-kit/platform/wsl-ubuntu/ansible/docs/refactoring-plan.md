@@ -13,7 +13,7 @@
 ### 現在の構成
 
 **主要コンポーネント:**
-- Ansible Playbook (`site.yml`)
+- Ansible Playbook (`playbooks/site.yml`)
 - 6つの主要ロール (base, development-runtime, docker, kubernetes, aws, postgresql)
 - 一元化された設定管理 (`group_vars/all.yml`)
 - Makefile ベースの自動化
@@ -180,7 +180,7 @@ galaxy_info:
 
 **実装:**
 ```yaml
-# site.yml with async tasks
+# playbooks/site.yml with async tasks
 - name: Install tools in parallel
   include_role:
     name: "{{ item }}"

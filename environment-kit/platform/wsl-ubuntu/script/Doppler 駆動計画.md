@@ -67,7 +67,7 @@
    ```bash
    doppler run -- git clone "$REPO_SSH_URL" /opt/playbook
    cd /opt/playbook
-   doppler run -- ansible-playbook -i "localhost," -c local site.yml
+   doppler run -- ansible-playbook -i "localhost," -c local playbooks/site.yml
    ```
 
 ---
