@@ -1,0 +1,4 @@
+---
+docker_version: "system"
+docker_manage_service: true
+validate_installation: true

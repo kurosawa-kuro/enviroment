@@ -1,0 +1,40 @@
+---
+- name: Run security command checks
+  shell: "{{ item.cmd }}"
+  args:
+    executable: /bin/bash
+  register: security_command_checks
+  changed_when: false
+  loop:
+    - name: trivy
+      cmd: "trivy --version"
+      pattern: "Version"
+    - name: kube-bench
+      cmd: "kube-bench version"
+      pattern: "version"
+    - name: kube-hunter
+      cmd: "command -v kube-hunter >/dev/null 2>&1 && kube-hunter --version || /home/{{ default_wsl_user }}/.local/bin/kube-hunter --version"
+      pattern: "kube-hunter"
+    - name: kubescape
+      cmd: "kubescape version"
+      pattern: ""
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - profile_security_enabled | default(true)
+    - security_enabled | default(true)
+
+- name: Assert security commands are available
+  assert:
+    that:
+      - item.rc == 0
+      - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
+    fail_msg: "Security check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
+    success_msg: "Security check passed for {{ item.item.name }}"
+  loop: "{{ security_command_checks.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - profile_security_enabled | default(true)
+    - security_enabled | default(true)
+    - item.skipped is not defined or not item.skipped

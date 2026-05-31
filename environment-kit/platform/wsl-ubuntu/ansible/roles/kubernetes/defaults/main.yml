@@ -1,0 +1,26 @@
+---
+kubernetes_version: "1.33.4"
+kubeadm_version: "1.33.4"
+kubelet_version: "1.33.4"
+kubectl_version: "1.33.4"
+kind_version: "0.24.0"
+minikube_version: "1.35.0"
+kustomize_version: "5.7.0"
+helm_version: "3.18.4"
+containerd_version: "1.7.20"
+crictl_version: "1.33.0"
+nerdctl_version: "1.7.6"
+krew_version: "0.4.4"
+kubectx_version: "0.9.5"
+kubens_version: "0.9.5"
+k9s_version: "0.32.5"
+stern_version: "1.30.0"
+download_dir: "/home/ubuntu/.tmp-ansible"
+kubernetes_install_kube_node_tools: false
+kubernetes_install_kind: true
+kubernetes_install_minikube: false
+kubernetes_install_kustomize: true
+kubernetes_install_helm: true
+kubernetes_install_container_runtime_tools: false
+kubernetes_install_kubectl_plugins: false
+validate_installation: true

@@ -1,0 +1,28 @@
+---
+- name: Run data command checks
+  shell: "{{ item.cmd }}"
+  args:
+    executable: /bin/bash
+  register: data_command_checks
+  changed_when: false
+  loop:
+    - name: psql
+      cmd: "psql --version"
+      pattern: "psql (PostgreSQL)"
+  loop_control:
+    label: "{{ item.name }}"
+  when: profile_data_enabled | default(true)
+
+- name: Assert data commands are available
+  assert:
+    that:
+      - item.rc == 0
+      - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
+    fail_msg: "Data check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
+    success_msg: "Data check passed for {{ item.item.name }}"
+  loop: "{{ data_command_checks.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - profile_data_enabled | default(true)
+    - item.skipped is not defined or not item.skipped

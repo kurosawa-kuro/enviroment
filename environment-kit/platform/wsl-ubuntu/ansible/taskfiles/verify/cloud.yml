@@ -1,0 +1,37 @@
+---
+- name: Run cloud command checks
+  shell: "{{ item.cmd }}"
+  args:
+    executable: /bin/bash
+  register: cloud_command_checks
+  changed_when: false
+  loop:
+    - name: gcloud
+      cmd: "command -v gcloud >/dev/null 2>&1 && gcloud version || /opt/google-cloud-sdk/bin/gcloud version"
+      pattern: "Google Cloud SDK"
+    - name: aws
+      cmd: "aws --version"
+      pattern: "aws-cli"
+    - name: terraform
+      cmd: "terraform version"
+      pattern: "Terraform"
+    - name: gh
+      cmd: "gh --version"
+      pattern: "gh version"
+  loop_control:
+    label: "{{ item.name }}"
+  when: profile_cloud_enabled | default(true)
+
+- name: Assert cloud commands are available
+  assert:
+    that:
+      - item.rc == 0
+      - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
+    fail_msg: "Cloud check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
+    success_msg: "Cloud check passed for {{ item.item.name }}"
+  loop: "{{ cloud_command_checks.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - profile_cloud_enabled | default(true)
+    - item.skipped is not defined or not item.skipped

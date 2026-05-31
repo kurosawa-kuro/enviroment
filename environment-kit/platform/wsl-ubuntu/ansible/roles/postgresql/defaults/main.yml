@@ -1,0 +1,12 @@
+---
+postgres_version: "15"
+postgres_port: 5432
+postgres_user: "postgres"
+postgres_password: "postgres"
+postgres_db_local: "local_dev"
+postgres_db_test: "local_test"
+postgres_db_encoding: "UTF8"
+postgres_extensions: "postgis,pgcrypto,uuid-ossp"
+neonctl_version: "latest"
+postgresql_manage_service: true
+validate_installation: true

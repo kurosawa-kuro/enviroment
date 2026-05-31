@@ -1,0 +1,30 @@
+---
+- name: Run core command checks
+  shell: "{{ item.cmd }}"
+  args:
+    executable: /bin/bash
+  register: core_command_checks
+  changed_when: false
+  loop:
+    - name: python3
+      cmd: "python3 --version"
+      pattern: "Python 3"
+    - name: pipx
+      cmd: "pipx --version"
+      pattern: ""
+    - name: doppler
+      cmd: "doppler --version"
+      pattern: "doppler"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Assert core commands are available
+  assert:
+    that:
+      - item.rc == 0
+      - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
+    fail_msg: "Core check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
+    success_msg: "Core check passed for {{ item.item.name }}"
+  loop: "{{ core_command_checks.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"

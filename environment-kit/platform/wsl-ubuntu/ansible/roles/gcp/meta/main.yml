@@ -1,0 +1,19 @@
+---
+dependencies:
+  - role: base
+
+galaxy_info:
+  role_name: gcp
+  author: WSL Ubuntu Environment Setup
+  description: Google Cloud CLI installation
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+  galaxy_tags:
+    - gcp
+    - google
+    - cloud
+    - cli

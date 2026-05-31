@@ -1,0 +1,11 @@
+---
+env_setting_file: ""
+default_wsl_user: "ubuntu"
+git_default_branch: "main"
+git_pull_rebase: "false"
+git_core_autocrlf: "input"
+git_core_filemode: "false"
+git_global_excludesfile: "~/.gitignore_global"
+git_user_name: ""
+git_user_email: ""
+validate_installation: true

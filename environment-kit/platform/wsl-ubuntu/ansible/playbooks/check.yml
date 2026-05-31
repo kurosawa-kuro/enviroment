@@ -17,118 +17,21 @@
     - "{{ playbook_dir }}/../../../env/config/setting.yaml"
     - "{{ playbook_dir }}/../../../env/secret/credential.yaml"
 
-  vars:
-    check_commands:
-      - name: python3
-        cmd: "python3 --version"
-        pattern: "Python 3"
-        enabled: true
-      - name: pipx
-        cmd: "pipx --version"
-        pattern: ""
-        enabled: true
-      - name: doppler
-        cmd: "doppler --version"
-        pattern: "doppler"
-        enabled: true
-      - name: rustc
-        cmd: "command -v rustc >/dev/null 2>&1 && rustc --version || /opt/rust/bin/rustc --version"
-        pattern: "rustc"
-        enabled: true
-      - name: node
-        cmd: "node --version"
-        pattern: "v"
-        enabled: true
-      - name: go
-        cmd: "go version"
-        pattern: "go version"
-        enabled: true
-      - name: docker
-        cmd: "docker --version"
-        pattern: "Docker version"
-        enabled: true
-      - name: kubectl
-        cmd: "kubectl version --client=true"
-        pattern: "Client Version"
-        enabled: true
-      - name: kind
-        cmd: "kind version"
-        pattern: "kind"
-        enabled: "{{ kubernetes_install_kind | default(true) }}"
-      - name: helm
-        cmd: "helm version"
-        pattern: "version.BuildInfo"
-        enabled: "{{ kubernetes_install_helm | default(true) }}"
-      - name: kustomize
-        cmd: "kustomize version"
-        pattern: ""
-        enabled: "{{ kubernetes_install_kustomize | default(true) }}"
-      - name: trivy
-        cmd: "trivy --version"
-        pattern: "Version"
-        enabled: "{{ security_enabled | default(true) }}"
-      - name: kube-bench
-        cmd: "kube-bench version"
-        pattern: "version"
-        enabled: "{{ security_enabled | default(true) }}"
-      - name: kube-hunter
-        cmd: "command -v kube-hunter >/dev/null 2>&1 && kube-hunter --version || /home/{{ default_wsl_user }}/.local/bin/kube-hunter --version"
-        pattern: "kube-hunter"
-        enabled: "{{ security_enabled | default(true) }}"
-      - name: kubescape
-        cmd: "kubescape version"
-        pattern: ""
-        enabled: "{{ security_enabled | default(true) }}"
-      - name: jq
-        cmd: "jq --version"
-        pattern: "jq-"
-        enabled: true
-      - name: yq
-        cmd: "yq --version"
-        pattern: "version"
-        enabled: true
-      - name: gcloud
-        cmd: "command -v gcloud >/dev/null 2>&1 && gcloud version || /opt/google-cloud-sdk/bin/gcloud version"
-        pattern: "Google Cloud SDK"
-        enabled: true
-      - name: aws
-        cmd: "aws --version"
-        pattern: "aws-cli"
-        enabled: true
-      - name: terraform
-        cmd: "terraform version"
-        pattern: "Terraform"
-        enabled: true
-      - name: gh
-        cmd: "gh --version"
-        pattern: "gh version"
-        enabled: true
-      - name: psql
-        cmd: "psql --version"
-        pattern: "psql (PostgreSQL)"
-        enabled: false
-
   tasks:
-    - name: Run command checks
-      shell: "{{ item.cmd }}"
-      args:
-        executable: /bin/bash
-      register: command_checks
-      changed_when: false
-      loop: "{{ check_commands }}"
-      loop_control:
-        label: "{{ item.name }}"
-      when: item.enabled | bool
+    - name: Verify core domain
+      import_tasks: ../taskfiles/verify/core.yml
 
-    - name: Assert expected tools are available
-      assert:
-        that:
-          - item.rc == 0
-          - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
-        fail_msg: "Check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
-        success_msg: "Check passed for {{ item.item.name }}"
-      loop: "{{ command_checks.results }}"
-      loop_control:
-        label: "{{ item.item.name }}"
-      when:
-        - item.skipped is not defined or not item.skipped
+    - name: Verify runtime domain
+      import_tasks: ../taskfiles/verify/runtime.yml
+
+    - name: Verify container domain
+      import_tasks: ../taskfiles/verify/container.yml
+
+    - name: Verify security domain
+      import_tasks: ../taskfiles/verify/security.yml
+
+    - name: Verify cloud domain
+      import_tasks: ../taskfiles/verify/cloud.yml
+
+    - name: Verify data domain
+      import_tasks: ../taskfiles/verify/data.yml

@@ -1,0 +1,4 @@
+---
+gcloud_version: "latest"
+download_dir: "/home/ubuntu/.tmp-ansible"
+validate_installation: true

@@ -1,0 +1,45 @@
+---
+- name: Run container command checks
+  shell: "{{ item.cmd }}"
+  args:
+    executable: /bin/bash
+  register: container_command_checks
+  changed_when: false
+  loop:
+    - name: docker
+      cmd: "docker --version"
+      pattern: "Docker version"
+    - name: kubectl
+      cmd: "kubectl version --client=true"
+      pattern: "Client Version"
+    - name: kind
+      cmd: "kind version"
+      pattern: "kind"
+      enabled: "{{ kubernetes_install_kind | default(true) }}"
+    - name: helm
+      cmd: "helm version"
+      pattern: "version.BuildInfo"
+      enabled: "{{ kubernetes_install_helm | default(true) }}"
+    - name: kustomize
+      cmd: "kustomize version"
+      pattern: ""
+      enabled: "{{ kubernetes_install_kustomize | default(true) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - profile_container_enabled | default(true)
+    - item.enabled is not defined or item.enabled | bool
+
+- name: Assert container commands are available
+  assert:
+    that:
+      - item.rc == 0
+      - item.item.pattern | length == 0 or (item.item.pattern in item.stdout)
+    fail_msg: "Container check failed for {{ item.item.name }}: {{ item.stdout | default(item.stderr, true) }}"
+    success_msg: "Container check passed for {{ item.item.name }}"
+  loop: "{{ container_command_checks.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - profile_container_enabled | default(true)
+    - item.skipped is not defined or not item.skipped

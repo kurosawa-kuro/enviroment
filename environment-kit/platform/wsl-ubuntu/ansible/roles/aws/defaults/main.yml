@@ -1,0 +1,6 @@
+---
+awscli_version: "2.28.10"
+terraform_version: "1.12.2"
+ghcli_version: "2.56.0"
+download_dir: "/home/ubuntu/.tmp-ansible"
+validate_installation: true

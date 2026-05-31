@@ -1,0 +1,4 @@
+---
+download_dir: "/home/ubuntu/.tmp-ansible"
+preload_cache: true
+validate_installation: true
